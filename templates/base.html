@@ -1,0 +1,34 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}BidHaus{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <a class="site-name" href="{% url 'auctions:auction_create' %}">BidHaus</a>
+        <nav>
+            <a href="{% url 'auctions:auction_create' %}">Publicar subasta</a>
+        </nav>
+    </header>
+
+    <main class="content">
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="message message-{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <p>BidHaus — proyecto académico. Los pagos son simulados.</p>
+    </footer>
+</body>
+</html>
