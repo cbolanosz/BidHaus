@@ -44,11 +44,13 @@ class AuctionCreateViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "auctions/auction_form.html")
 
-    def test_publishes_the_auction_described_by_the_form(self):
+    def test_publishes_the_auction_and_sends_the_seller_to_its_photographs(self):
         response = self.post()
 
-        self.assertRedirects(response, self.url)
-        self.assertEqual(Auction.objects.count(), 1)
+        auction = Auction.objects.get()
+        self.assertRedirects(
+            response, reverse("auctions:auction_photographs", args=[auction.pk])
+        )
 
     def test_offers_only_registered_sellers_as_authors(self):
         bidder = User.objects.create_user(

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Fotografías de {{ auction.title }} — BidHaus{% endblock %}
+
+{% block content %}
+<h1>Fotografías de «{{ auction.title }}»</h1>
+<p class="counter">{{ photographs|length }} de {{ max_photographs }} fotografías.</p>
+
+{% if photographs %}
+    <ul class="photograph-grid">
+        {% for photograph in photographs %}
+            <li>
+                <img src="{{ photograph.image.url }}" alt="Fotografía {{ photograph.display_order }} de {{ auction.title }}">
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{% if form.images.errors %}
+    <ul class="errors">
+        {% for error in form.images.errors %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+{% endif %}
+
+{% if free_slots %}
+    <form method="post" enctype="multipart/form-data" class="form" novalidate>
+        {% csrf_token %}
+
+        <div class="field">
+            <label for="{{ form.images.id_for_label }}">{{ form.images.label }}</label>
+            {{ form.images }}
+            <p class="help">{{ form.images.help_text }}</p>
+        </div>
+
+        <button type="submit">Subir fotografías</button>
+    </form>
+{% else %}
+    <p>Esta subasta ya tiene el máximo de {{ max_photographs }} fotografías.</p>
+{% endif %}
+{% endblock %}

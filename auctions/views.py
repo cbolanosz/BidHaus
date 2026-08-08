@@ -1,11 +1,19 @@
 """HTTP layer: parse the request, call a service, render a template."""
 
 from django.contrib import messages
+from django.http import Http404
 from django.shortcuts import redirect, render
 
-from auctions.exceptions import NotASeller
-from auctions.forms import AuctionForm
-from auctions.services import publish_auction
+from auctions.exceptions import NotASeller, TooManyPhotographs
+from auctions.forms import AuctionForm, PhotographUploadForm
+from auctions.models import MAX_PHOTOGRAPHS, Auction
+from auctions.services import (
+    add_photographs,
+    count_free_photograph_slots,
+    find_auction,
+    list_photographs,
+    publish_auction,
+)
 
 
 def auction_create(request):
@@ -31,5 +39,48 @@ def auction_create(request):
         form.add_error("seller", "Solo un vendedor registrado puede publicar una subasta.")
         return render(request, "auctions/auction_form.html", {"form": form})
 
-    messages.success(request, f"Se publicó la subasta «{auction.title}».")
-    return redirect("auctions:auction_create")
+    messages.success(request, f"Se publicó la subasta «{auction.title}». Ahora añade sus fotografías.")
+    return redirect("auctions:auction_photographs", auction_id=auction.pk)
+
+
+def auction_photographs(request, auction_id):
+    """Show the photographs of an auction and receive new ones (FR02)."""
+    try:
+        auction = find_auction(auction_id)
+    except Auction.DoesNotExist:
+        raise Http404("La subasta no existe.")
+
+    if request.method != "POST":
+        return _render_photograph_page(request, auction, PhotographUploadForm())
+
+    form = PhotographUploadForm(request.POST, request.FILES)
+    if not form.is_valid():
+        return _render_photograph_page(request, auction, form)
+
+    try:
+        photographs = add_photographs(auction, form.cleaned_data["images"])
+    except TooManyPhotographs as error:
+        form.add_error(
+            "images",
+            f"Solo caben {error.remaining_slots} fotografías más: "
+            f"una subasta admite {MAX_PHOTOGRAPHS} en total.",
+        )
+        return _render_photograph_page(request, auction, form)
+
+    messages.success(request, f"Se subieron {len(photographs)} fotografías.")
+    return redirect("auctions:auction_photographs", auction_id=auction.pk)
+
+
+def _render_photograph_page(request, auction, form):
+    """Render the photograph page with the state the seller needs to see."""
+    return render(
+        request,
+        "auctions/photograph_form.html",
+        {
+            "auction": auction,
+            "form": form,
+            "photographs": list_photographs(auction),
+            "free_slots": count_free_photograph_slots(auction),
+            "max_photographs": MAX_PHOTOGRAPHS,
+        },
+    )

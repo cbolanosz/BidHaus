@@ -2,11 +2,14 @@
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.db.models import Max
 
-from auctions.exceptions import NotASeller
-from auctions.models import Auction
+from auctions.exceptions import NoPhotographs, NotASeller, TooManyPhotographs
+from auctions.models import MAX_PHOTOGRAPHS, Auction, Photograph
 
 User = get_user_model()
+
+FIRST_DISPLAY_ORDER = 1
 
 
 @transaction.atomic
@@ -34,3 +37,50 @@ def publish_auction(seller, category, title, description, condition, starting_pr
     auction.full_clean()
     auction.save()
     return auction
+
+
+def find_auction(auction_id):
+    """Return the auction with that identifier, or raise Auction.DoesNotExist."""
+    return Auction.objects.select_related("seller", "category").get(pk=auction_id)
+
+
+def list_photographs(auction):
+    """Return the photographs of an auction, in the order the seller chose."""
+    return auction.photographs.all()
+
+
+def count_free_photograph_slots(auction):
+    """Return how many photographs the auction can still receive (DBR03)."""
+    return MAX_PHOTOGRAPHS - auction.photographs.count()
+
+
+@transaction.atomic
+def add_photographs(auction, images):
+    """Attach uploaded images to an auction, keeping it within 1 and 8 (FR02).
+
+    The images are appended after the ones already stored, so a second upload
+    continues the display order instead of restarting it.
+    """
+    if not images:
+        raise NoPhotographs
+
+    free_slots = count_free_photograph_slots(auction)
+    if len(images) > free_slots:
+        raise TooManyPhotographs(free_slots)
+
+    first_order = _next_display_order(auction)
+    photographs = []
+    for offset, image in enumerate(images):
+        photograph = Photograph(auction=auction, image=image, display_order=first_order + offset)
+        photograph.full_clean()
+        photograph.save()
+        photographs.append(photograph)
+    return photographs
+
+
+def _next_display_order(auction):
+    """Return the display order that continues the photographs already stored."""
+    highest_order = auction.photographs.aggregate(Max("display_order"))["display_order__max"]
+    if highest_order is None:
+        return FIRST_DISPLAY_ORDER
+    return highest_order + 1
