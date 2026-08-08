@@ -3,7 +3,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 
-from auctions.models import MAX_PHOTOGRAPHS, MIN_PHOTOGRAPHS, Auction
+from auctions.models import MAX_PHOTOGRAPHS, MIN_PHOTOGRAPHS, Auction, Category
 from auctions.validators import MAX_PHOTOGRAPH_SIZE_MB, validate_photograph_size
 
 User = get_user_model()
@@ -35,6 +35,40 @@ class AuctionForm(forms.ModelForm):
         self.fields["seller"].empty_label = "Elige un vendedor registrado"
         self.fields["closing_date"].input_formats = [DATETIME_LOCAL_FORMAT]
         self.fields["description"].help_text = "Describe el artículo, su uso y sus defectos."
+
+
+class AuctionSearchForm(forms.Form):
+    """Filters a visitor applies to the catalogue (FR03). Every field is optional."""
+
+    text = forms.CharField(label="Buscar", max_length=120, required=False)
+    category = forms.ModelChoiceField(
+        label="Categoría",
+        queryset=Category.objects.all(),
+        required=False,
+        empty_label="Todas",
+    )
+    condition = forms.ChoiceField(
+        label="Estado del artículo",
+        choices=[("", "Cualquiera")] + Auction.Condition.choices,
+        required=False,
+    )
+    minimum_price = forms.DecimalField(
+        label="Precio desde", min_value=0, decimal_places=2, required=False
+    )
+    maximum_price = forms.DecimalField(
+        label="Precio hasta", min_value=0, decimal_places=2, required=False
+    )
+
+    def clean(self):
+        """Reject a price range whose lower end is above its upper end."""
+        cleaned_data = super().clean()
+        minimum_price = cleaned_data.get("minimum_price")
+        maximum_price = cleaned_data.get("maximum_price")
+
+        if minimum_price is not None and maximum_price is not None and minimum_price > maximum_price:
+            self.add_error("maximum_price", "El precio máximo debe ser mayor que el mínimo.")
+
+        return cleaned_data
 
 
 class MultipleFileInput(forms.ClearableFileInput):

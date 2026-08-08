@@ -27,6 +27,46 @@ class Category(models.Model):
         return self.name
 
 
+class AuctionQuerySet(models.QuerySet):
+    """The filters of the catalogue (FR03).
+
+    Every filter ignores itself when it receives no value, so a search combines
+    them by chaining instead of by branching.
+    """
+
+    def open(self):
+        return self.filter(state=Auction.State.OPEN)
+
+    def matching_text(self, text):
+        if not text:
+            return self
+        return self.filter(models.Q(title__icontains=text) | models.Q(description__icontains=text))
+
+    def in_category(self, category):
+        if category is None:
+            return self
+        return self.filter(category=category)
+
+    def with_condition(self, condition):
+        if not condition:
+            return self
+        return self.filter(condition=condition)
+
+    def priced_from(self, minimum_price):
+        if minimum_price is None:
+            return self
+        return self.filter(current_price__gte=minimum_price)
+
+    def priced_up_to(self, maximum_price):
+        if maximum_price is None:
+            return self
+        return self.filter(current_price__lte=maximum_price)
+
+    def for_catalogue(self):
+        """Fetch in advance everything a catalogue card shows, to avoid N+1 queries."""
+        return self.select_related("seller", "category").prefetch_related("photographs")
+
+
 class Auction(models.Model):
     """An item offered by a seller until its closing date is reached."""
 
@@ -67,6 +107,8 @@ class Auction(models.Model):
     state = models.CharField("estado", max_length=20, choices=State.choices, default=State.OPEN)
     published_at = models.DateTimeField("fecha de publicación", auto_now_add=True)
 
+    objects = AuctionQuerySet.as_manager()
+
     class Meta:
         ordering = ["-published_at"]
         verbose_name = "subasta"
@@ -74,6 +116,14 @@ class Auction(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def main_photograph(self):
+        """The photograph the catalogue shows: the first one in display order."""
+        photographs = list(self.photographs.all())
+        if not photographs:
+            return None
+        return photographs[0]
 
     def clean(self):
         """Enforce that the auction closes after it is published (DBR02)."""

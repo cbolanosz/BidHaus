@@ -7,6 +7,7 @@ from auctions import views
 app_name = "auctions"
 
 urlpatterns = [
+    path("", views.auction_catalogue, name="catalogue"),
     path("auctions/new/", views.auction_create, name="auction_create"),
     path(
         "auctions/<int:auction_id>/photographs/",

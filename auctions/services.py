@@ -39,6 +39,23 @@ def publish_auction(seller, category, title, description, condition, starting_pr
     return auction
 
 
+def search_auctions(text=None, category=None, condition=None, minimum_price=None, maximum_price=None):
+    """Return the open auctions that match the filters of the catalogue (FR03).
+
+    A filter that receives no value does not narrow the search, so calling this
+    without arguments returns the whole catalogue.
+    """
+    return (
+        Auction.objects.open()
+        .matching_text(text)
+        .in_category(category)
+        .with_condition(condition)
+        .priced_from(minimum_price)
+        .priced_up_to(maximum_price)
+        .for_catalogue()
+    )
+
+
 def find_auction(auction_id):
     """Return the auction with that identifier, or raise Auction.DoesNotExist."""
     return Auction.objects.select_related("seller", "category").get(pk=auction_id)

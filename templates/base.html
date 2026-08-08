@@ -9,8 +9,9 @@
 </head>
 <body>
     <header class="site-header">
-        <a class="site-name" href="{% url 'auctions:auction_create' %}">BidHaus</a>
+        <a class="site-name" href="{% url 'auctions:catalogue' %}">BidHaus</a>
         <nav>
+            <a href="{% url 'auctions:catalogue' %}">Subastas</a>
             <a href="{% url 'auctions:auction_create' %}">Publicar subasta</a>
         </nav>
     </header>

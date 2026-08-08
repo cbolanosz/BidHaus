@@ -5,7 +5,7 @@ from django.http import Http404
 from django.shortcuts import redirect, render
 
 from auctions.exceptions import NotASeller, TooManyPhotographs
-from auctions.forms import AuctionForm, PhotographUploadForm
+from auctions.forms import AuctionForm, AuctionSearchForm, PhotographUploadForm
 from auctions.models import MAX_PHOTOGRAPHS, Auction
 from auctions.services import (
     add_photographs,
@@ -13,7 +13,24 @@ from auctions.services import (
     find_auction,
     list_photographs,
     publish_auction,
+    search_auctions,
 )
+
+
+def auction_catalogue(request):
+    """List the open auctions, narrowed by the filters the visitor chose (FR03)."""
+    form = AuctionSearchForm(request.GET)
+    if not form.is_valid():
+        return render(request, "auctions/catalogue.html", {"form": form, "auctions": []})
+
+    auctions = search_auctions(
+        text=form.cleaned_data["text"],
+        category=form.cleaned_data["category"],
+        condition=form.cleaned_data["condition"],
+        minimum_price=form.cleaned_data["minimum_price"],
+        maximum_price=form.cleaned_data["maximum_price"],
+    )
+    return render(request, "auctions/catalogue.html", {"form": form, "auctions": auctions})
 
 
 def auction_create(request):
