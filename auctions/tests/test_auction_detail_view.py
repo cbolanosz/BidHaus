@@ -55,5 +55,5 @@ class AuctionDetailViewTests(TestCase):
         for amount in range(300000, 310000, 1000):
             create_bid(self.auction, str(amount))
 
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(4):
             self.client.get(self.url)

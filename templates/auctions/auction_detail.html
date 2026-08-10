@@ -32,6 +32,33 @@
         <dt>Precio inicial</dt><dd>$ {{ auction.starting_price|floatformat:0|intcomma }} COP</dd>
     </dl>
 
+    {% if form.non_field_errors %}
+        <ul class="errors">
+            {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if auction.is_open %}
+        <h2>Pujar</h2>
+        <form method="post" action="{% url 'auctions:auction_bid' auction.pk %}" class="form" novalidate>
+            {% csrf_token %}
+
+            {% for field in form %}
+                <div class="field">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <ul class="errors">
+                            {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <button type="submit">Pujar</button>
+        </form>
+    {% endif %}
+
     <h2>Descripción</h2>
     <p>{{ auction.description|linebreaksbr }}</p>
 

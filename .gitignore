@@ -6,3 +6,4 @@ media/
 .venv/
 .env
 .claude/settings.local.json
+test_db.sqlite3*

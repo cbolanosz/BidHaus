@@ -3,7 +3,13 @@
 from django import forms
 from django.contrib.auth import get_user_model
 
-from auctions.models import MAX_PHOTOGRAPHS, MIN_PHOTOGRAPHS, Auction, Category
+from auctions.models import (
+    MAX_PHOTOGRAPHS,
+    MIN_PHOTOGRAPHS,
+    MINIMUM_PRICE,
+    Auction,
+    Category,
+)
 from auctions.validators import MAX_PHOTOGRAPH_SIZE_MB, validate_photograph_size
 
 User = get_user_model()
@@ -106,6 +112,23 @@ class AuctionSearchForm(forms.Form):
             self.add_error("maximum_price", "El precio máximo debe ser mayor que el mínimo.")
 
         return cleaned_data
+
+
+class BidForm(forms.Form):
+    """The amount a bidder offers for an auction (FR05).
+
+    The bidder is a visible field because sprint 1 has no login yet; it will be
+    taken from the session once FR31 is implemented.
+    """
+
+    bidder = forms.ModelChoiceField(
+        label="Pujador",
+        queryset=User.objects.bidders(),
+        empty_label="Elige un pujador registrado",
+    )
+    amount = forms.DecimalField(
+        label="Tu puja (COP)", max_digits=12, decimal_places=2, min_value=MINIMUM_PRICE
+    )
 
 
 class PhotographUploadForm(forms.Form):

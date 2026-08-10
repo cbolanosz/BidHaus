@@ -1,15 +1,32 @@
 """Use cases of the auctions app. Views call these; they never touch the ORM."""
 
-from django.contrib.auth import get_user_model
-from django.db import transaction
-from django.db.models import Max
+import time
 
-from auctions.exceptions import NoPhotographs, NotASeller, TooManyPhotographs
-from auctions.models import MAX_PHOTOGRAPHS, Auction, Photograph
+from django.contrib.auth import get_user_model
+from django.db import OperationalError, transaction
+from django.db.models import Max
+from django.utils import timezone
+
+from auctions.exceptions import (
+    AuctionClosed,
+    BiddingIsBusy,
+    BidTooLow,
+    NoPhotographs,
+    NotABidder,
+    NotASeller,
+    SellerCannotBid,
+    TooManyPhotographs,
+)
+from auctions.models import MAX_PHOTOGRAPHS, Auction, Bid, Photograph
 
 User = get_user_model()
 
 FIRST_DISPLAY_ORDER = 1
+
+# SQLite serialises writes with a database-level lock, so a bid that arrives
+# while another one is being written fails instead of waiting (CLAUDE.md 4.1).
+BID_ATTEMPTS = 3
+BID_RETRY_BACKOFF_SECONDS = 0.1
 
 
 @transaction.atomic
@@ -74,6 +91,49 @@ def list_photographs(auction):
 def list_bids(auction):
     """Return the complete bid history of an auction, highest amount first (FR04)."""
     return auction.bids.select_related("bidder")
+
+
+def place_bid(auction_id, bidder, amount):
+    """Register a bid on an open auction and update its current price (FR05).
+
+    Two bidders can reach this at the same time, and on SQLite the loser of that
+    race is rejected with a lock error rather than made to wait. Retrying the
+    whole transaction is what turns that rejection into a bid that is simply
+    registered a moment later.
+    """
+    for attempt in range(BID_ATTEMPTS):
+        try:
+            return _register_bid(auction_id, bidder, amount)
+        except OperationalError:
+            time.sleep(BID_RETRY_BACKOFF_SECONDS * (attempt + 1))
+    raise BiddingIsBusy
+
+
+@transaction.atomic
+def _register_bid(auction_id, bidder, amount):
+    """Validate and store one bid against the price stored right now.
+
+    The auction is read again inside the transaction because the price rendered
+    in the form may already be stale by the time the bidder submits it.
+    """
+    auction = Auction.objects.select_for_update().get(pk=auction_id)  # no-op on SQLite, kept for portability
+
+    if bidder.role != User.Role.BIDDER:
+        raise NotABidder
+    if auction.seller_id == bidder.id:
+        raise SellerCannotBid
+    if not auction.is_open or auction.closing_date <= timezone.now():
+        raise AuctionClosed
+    if amount <= auction.current_price:
+        raise BidTooLow(auction.current_price)
+
+    bid = Bid(auction=auction, bidder=bidder, amount=amount)
+    bid.full_clean()
+    bid.save()
+
+    auction.current_price = amount
+    auction.save(update_fields=["current_price"])
+    return bid
 
 
 def count_free_photograph_slots(auction):

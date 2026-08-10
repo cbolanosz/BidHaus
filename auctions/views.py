@@ -4,8 +4,16 @@ from django.contrib import messages
 from django.http import Http404
 from django.shortcuts import redirect, render
 
-from auctions.exceptions import NotASeller, TooManyPhotographs
-from auctions.forms import AuctionForm, AuctionSearchForm, PhotographUploadForm
+from auctions.exceptions import (
+    AuctionClosed,
+    BiddingIsBusy,
+    BidTooLow,
+    NotABidder,
+    NotASeller,
+    SellerCannotBid,
+    TooManyPhotographs,
+)
+from auctions.forms import AuctionForm, AuctionSearchForm, BidForm, PhotographUploadForm
 from auctions.models import MAX_PHOTOGRAPHS, Auction
 from auctions.services import (
     add_photographs,
@@ -13,6 +21,7 @@ from auctions.services import (
     find_auction,
     list_bids,
     list_photographs,
+    place_bid,
     publish_auction,
     search_auctions,
 )
@@ -70,11 +79,56 @@ def auction_create(request):
 
 def auction_detail(request, auction_id):
     """Show an auction with its photographs and its complete bid history (FR04)."""
+    return _render_auction_detail(request, _find_auction_or_404(auction_id), BidForm())
+
+
+def auction_bid(request, auction_id):
+    """Register the bid a bidder submitted from the detail page (FR05)."""
+    auction = _find_auction_or_404(auction_id)
+
+    if request.method != "POST":
+        return redirect("auctions:auction_detail", auction_id=auction.pk)
+
+    form = BidForm(request.POST)
+    if not form.is_valid():
+        return _render_auction_detail(request, auction, form)
+
     try:
-        auction = find_auction(auction_id)
+        bid = place_bid(
+            auction_id=auction.pk,
+            bidder=form.cleaned_data["bidder"],
+            amount=form.cleaned_data["amount"],
+        )
+    except AuctionClosed:
+        form.add_error(None, "Esta subasta ya está cerrada y no admite más pujas.")
+        return _render_auction_detail(request, _find_auction_or_404(auction_id), form)
+    except NotABidder:
+        form.add_error("bidder", "Solo un pujador registrado puede pujar.")
+        return _render_auction_detail(request, auction, form)
+    except SellerCannotBid:
+        form.add_error("bidder", "El vendedor no puede pujar en su propia subasta.")
+        return _render_auction_detail(request, auction, form)
+    except BidTooLow as error:
+        form.add_error("amount", f"Tu puja debe superar el precio actual: $ {error.current_price:,.0f} COP.")
+        return _render_auction_detail(request, _find_auction_or_404(auction_id), form)
+    except BiddingIsBusy:
+        form.add_error(None, "Hay muchas pujas al tiempo. Vuelve a intentarlo.")
+        return _render_auction_detail(request, _find_auction_or_404(auction_id), form)
+
+    messages.success(request, f"Se registró tu puja de $ {bid.amount:,.0f} COP.")
+    return redirect("auctions:auction_detail", auction_id=auction.pk)
+
+
+def _find_auction_or_404(auction_id):
+    """Return the auction with that identifier, or answer 404."""
+    try:
+        return find_auction(auction_id)
     except Auction.DoesNotExist:
         raise Http404("La subasta no existe.")
 
+
+def _render_auction_detail(request, auction, form):
+    """Render the detail page with everything a visitor sees on it."""
     return render(
         request,
         "auctions/auction_detail.html",
@@ -82,6 +136,7 @@ def auction_detail(request, auction_id):
             "auction": auction,
             "photographs": list_photographs(auction),
             "bids": list_bids(auction),
+            "form": form,
         },
     )
 

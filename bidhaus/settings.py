@@ -66,6 +66,10 @@ DATABASES = {
             "transaction_mode": "IMMEDIATE",
             "init_command": "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;",
         },
+        # The test database is a file, not the in-memory default: WAL mode and the
+        # lock timeout above only exist on a file, and the bidding rules are tested
+        # against concurrent writers.
+        "TEST": {"NAME": BASE_DIR / "test_db.sqlite3"},
     }
 }
 
