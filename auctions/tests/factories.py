@@ -10,12 +10,13 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from PIL import Image
 
-from auctions.models import Auction, Category
+from auctions.models import Auction, Bid, Category
 from auctions.validators import MAX_PHOTOGRAPH_SIZE_BYTES
 
 User = get_user_model()
 
 _seller_numbers = count(1)
+_bidder_numbers = count(1)
 
 
 def create_seller(email=None):
@@ -25,6 +26,23 @@ def create_seller(email=None):
         password="clave-de-prueba",
         full_name="Vendedora de prueba",
         role=User.Role.SELLER,
+    )
+
+
+def create_bidder(full_name="Pujador de prueba"):
+    """Create a user registered with the bidder role, with a unique email."""
+    return User.objects.create_user(
+        email=f"pujador{next(_bidder_numbers)}@bidhaus.co",
+        password="clave-de-prueba",
+        full_name=full_name,
+        role=User.Role.BIDDER,
+    )
+
+
+def create_bid(auction, amount, bidder=None):
+    """Register a bid directly, without the rules that FR05 will add."""
+    return Bid.objects.create(
+        auction=auction, bidder=bidder or create_bidder(), amount=Decimal(amount)
     )
 
 

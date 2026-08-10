@@ -25,12 +25,14 @@
     <ul class="auction-grid">
         {% for auction in auctions %}
             <li class="auction-card">
-                {% if auction.main_photograph %}
-                    <img src="{{ auction.main_photograph.image.url }}" alt="Fotografía de {{ auction.title }}">
-                {% else %}
-                    <p class="no-photograph">Sin fotografías</p>
-                {% endif %}
-                <h2>{{ auction.title }}</h2>
+                <a href="{% url 'auctions:auction_detail' auction.pk %}">
+                    {% if auction.main_photograph %}
+                        <img src="{{ auction.main_photograph.image.url }}" alt="Fotografía de {{ auction.title }}">
+                    {% else %}
+                        <p class="no-photograph">Sin fotografías</p>
+                    {% endif %}
+                </a>
+                <h2><a href="{% url 'auctions:auction_detail' auction.pk %}">{{ auction.title }}</a></h2>
                 <p class="price">$ {{ auction.current_price|floatformat:0|intcomma }} COP</p>
                 <p class="meta">{{ auction.category.name }} · {{ auction.get_condition_display }}</p>
                 <p class="meta">Cierra el {{ auction.closing_date|date:"d/m/Y H:i" }}</p>

@@ -6,6 +6,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
 
+from auctions.exceptions import BidIsImmutable
 from auctions.validators import validate_photograph_size
 
 MINIMUM_PRICE = 1
@@ -118,6 +119,11 @@ class Auction(models.Model):
         return self.title
 
     @property
+    def is_open(self):
+        """Whether the auction is still in its bidding period."""
+        return self.state == self.State.OPEN
+
+    @property
     def main_photograph(self):
         """The photograph the catalogue shows: the first one in display order."""
         photographs = list(self.photographs.all())
@@ -172,3 +178,61 @@ class Photograph(models.Model):
 
     def __str__(self):
         return f"{self.auction.title} ({self.display_order})"
+
+
+class BidQuerySet(models.QuerySet):
+    """Closes the two ways of changing rows in bulk, which skip Model.save()."""
+
+    def update(self, **fields):
+        raise BidIsImmutable
+
+    def delete(self):
+        raise BidIsImmutable
+
+
+class Bid(models.Model):
+    """An amount a bidder offered for an auction (DBR04).
+
+    A bid is a historical fact: once created it is never modified nor deleted,
+    because the bid history is the evidence of how the price was reached.
+    """
+
+    auction = models.ForeignKey(
+        Auction,
+        on_delete=models.CASCADE,
+        related_name="bids",
+        verbose_name="subasta",
+    )
+    bidder = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="bids",
+        verbose_name="pujador",
+    )
+    amount = models.DecimalField(
+        "monto",
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(MINIMUM_PRICE)],
+    )
+    timestamp = models.DateTimeField("fecha y hora", auto_now_add=True)
+
+    objects = BidQuerySet.as_manager()
+
+    class Meta:
+        ordering = ["-amount", "timestamp"]
+        verbose_name = "puja"
+        verbose_name_plural = "pujas"
+
+    def __str__(self):
+        return f"{self.bidder} · {self.amount}"
+
+    def save(self, *args, **kwargs):
+        """Store the bid, and refuse to modify one that already exists (DBR04)."""
+        if not self._state.adding:
+            raise BidIsImmutable
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        """Refuse to delete a bid: the history is append-only (DBR04)."""
+        raise BidIsImmutable

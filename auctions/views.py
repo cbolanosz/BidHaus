@@ -11,6 +11,7 @@ from auctions.services import (
     add_photographs,
     count_free_photograph_slots,
     find_auction,
+    list_bids,
     list_photographs,
     publish_auction,
     search_auctions,
@@ -38,7 +39,7 @@ def auction_create(request):
     if request.method != "POST":
         return render(request, "auctions/auction_form.html", {"form": AuctionForm()})
 
-    form = AuctionForm(request.POST)
+    form = AuctionForm(request.POST, request.FILES)
     if not form.is_valid():
         return render(request, "auctions/auction_form.html", {"form": form})
 
@@ -51,13 +52,38 @@ def auction_create(request):
             condition=form.cleaned_data["condition"],
             starting_price=form.cleaned_data["starting_price"],
             closing_date=form.cleaned_data["closing_date"],
+            images=form.cleaned_data["images"],
         )
     except NotASeller:
         form.add_error("seller", "Solo un vendedor registrado puede publicar una subasta.")
         return render(request, "auctions/auction_form.html", {"form": form})
+    except TooManyPhotographs:
+        form.add_error("images", f"Una subasta admite {MAX_PHOTOGRAPHS} fotografías como máximo.")
+        return render(request, "auctions/auction_form.html", {"form": form})
 
-    messages.success(request, f"Se publicó la subasta «{auction.title}». Ahora añade sus fotografías.")
+    messages.success(
+        request,
+        f"Se publicó la subasta «{auction.title}». Puedes añadir más fotografías.",
+    )
     return redirect("auctions:auction_photographs", auction_id=auction.pk)
+
+
+def auction_detail(request, auction_id):
+    """Show an auction with its photographs and its complete bid history (FR04)."""
+    try:
+        auction = find_auction(auction_id)
+    except Auction.DoesNotExist:
+        raise Http404("La subasta no existe.")
+
+    return render(
+        request,
+        "auctions/auction_detail.html",
+        {
+            "auction": auction,
+            "photographs": list_photographs(auction),
+            "bids": list_bids(auction),
+        },
+    )
 
 
 def auction_photographs(request, auction_id):

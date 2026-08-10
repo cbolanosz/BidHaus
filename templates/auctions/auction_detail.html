@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ auction.title }} — BidHaus{% endblock %}
+
+{% block content %}
+<article class="detail">
+    <h1>{{ auction.title }}</h1>
+
+    <ul class="photograph-grid">
+        {% for photograph in photographs %}
+            <li>
+                <img src="{{ photograph.image.url }}" alt="Fotografía {{ photograph.display_order }} de {{ auction.title }}">
+            </li>
+        {% empty %}
+            <li><p class="no-photograph">Sin fotografías</p></li>
+        {% endfor %}
+    </ul>
+
+    <p class="price">$ {{ auction.current_price|floatformat:0|intcomma }} COP</p>
+
+    {% if auction.is_open %}
+        <p class="countdown">Cierra en {{ auction.closing_date|timeuntil }} ({{ auction.closing_date|date:"d/m/Y H:i" }}).</p>
+    {% else %}
+        <p class="countdown">Subasta {{ auction.get_state_display|lower }} el {{ auction.closing_date|date:"d/m/Y H:i" }}.</p>
+    {% endif %}
+
+    <dl class="attributes">
+        <dt>Categoría</dt><dd>{{ auction.category.name }}</dd>
+        <dt>Estado del artículo</dt><dd>{{ auction.get_condition_display }}</dd>
+        <dt>Vendedor</dt><dd>{{ auction.seller.full_name }}</dd>
+        <dt>Precio inicial</dt><dd>$ {{ auction.starting_price|floatformat:0|intcomma }} COP</dd>
+    </dl>
+
+    <h2>Descripción</h2>
+    <p>{{ auction.description|linebreaksbr }}</p>
+
+    <h2>Historial de pujas</h2>
+    {% if bids %}
+        <table class="bids">
+            <thead>
+                <tr><th>Monto</th><th>Pujador</th><th>Fecha</th></tr>
+            </thead>
+            <tbody>
+                {% for bid in bids %}
+                    <tr>
+                        <td>$ {{ bid.amount|floatformat:0|intcomma }} COP</td>
+                        <td>{{ bid.bidder.full_name }}</td>
+                        <td>{{ bid.timestamp|date:"d/m/Y H:i" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Esta subasta aún no tiene pujas.</p>
+    {% endif %}
+</article>
+{% endblock %}

@@ -13,10 +13,14 @@ FIRST_DISPLAY_ORDER = 1
 
 
 @transaction.atomic
-def publish_auction(seller, category, title, description, condition, starting_price, closing_date):
-    """Publish an auction that opens at its starting price (FR01).
+def publish_auction(
+    seller, category, title, description, condition, starting_price, closing_date, images
+):
+    """Publish an auction with its first photographs (FR01).
 
-    Only a user registered with the seller role may publish. The current price
+    Only a user registered with the seller role may publish. The auction and its
+    photographs are stored in the same transaction, so an auction never reaches
+    the catalogue without the photograph that DBR03 demands. The current price
     starts equal to the starting price, so the first bid is compared against a
     real amount instead of against a null.
     """
@@ -36,6 +40,7 @@ def publish_auction(seller, category, title, description, condition, starting_pr
     )
     auction.full_clean()
     auction.save()
+    add_photographs(auction, images)
     return auction
 
 
@@ -64,6 +69,11 @@ def find_auction(auction_id):
 def list_photographs(auction):
     """Return the photographs of an auction, in the order the seller chose."""
     return auction.photographs.all()
+
+
+def list_bids(auction):
+    """Return the complete bid history of an auction, highest amount first (FR04)."""
+    return auction.bids.select_related("bidder")
 
 
 def count_free_photograph_slots(auction):

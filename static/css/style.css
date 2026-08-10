@@ -137,6 +137,57 @@ nav {
     font-size: 1.05rem;
 }
 
+.auction-card h2 a {
+    color: var(--ink);
+    text-decoration: none;
+}
+
+.auction-card h2 a:hover {
+    text-decoration: underline;
+}
+
+.detail .price {
+    margin: 0.5rem 0 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+.countdown {
+    margin: 0.25rem 0 1.5rem;
+    color: var(--ink-soft);
+}
+
+.attributes {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.35rem 1rem;
+    margin: 0 0 1.5rem;
+}
+
+.attributes dt {
+    color: var(--ink-soft);
+}
+
+.attributes dd {
+    margin: 0;
+}
+
+.bids {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.bids th,
+.bids td {
+    padding: 0.5rem 0.65rem;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+}
+
+.bids tbody tr:first-child td {
+    font-weight: 700;
+}
+
 .auction-card .price {
     margin: 0;
     font-size: 1.15rem;

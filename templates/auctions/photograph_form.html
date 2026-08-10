@@ -4,6 +4,7 @@
 
 {% block content %}
 <h1>Fotografías de «{{ auction.title }}»</h1>
+<p><a href="{% url 'auctions:auction_detail' auction.pk %}">Ver la subasta</a></p>
 <p class="counter">{{ photographs|length }} de {{ max_photographs }} fotografías.</p>
 
 {% if photographs %}

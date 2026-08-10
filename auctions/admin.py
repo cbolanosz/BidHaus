@@ -2,7 +2,7 @@
 
 from django.contrib import admin
 
-from auctions.models import MAX_PHOTOGRAPHS, Auction, Category, Photograph
+from auctions.models import MAX_PHOTOGRAPHS, Auction, Bid, Category, Photograph
 
 
 @admin.register(Category)
@@ -24,3 +24,20 @@ class AuctionAdmin(admin.ModelAdmin):
     list_filter = ["state", "condition", "category"]
     search_fields = ["title", "description"]
     readonly_fields = ["published_at"]
+
+
+@admin.register(Bid)
+class BidAdmin(admin.ModelAdmin):
+    """A bid is append-only (DBR04), so the admin only reads it."""
+
+    list_display = ["auction", "bidder", "amount", "timestamp"]
+    list_filter = ["auction"]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

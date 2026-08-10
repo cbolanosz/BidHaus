@@ -1,26 +1,24 @@
 """Tests of the publication page (FR01)."""
 
+import tempfile
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
 from auctions.forms import DATETIME_LOCAL_FORMAT
-from auctions.models import Auction, Category
+from auctions.models import MAX_PHOTOGRAPHS, Auction, Category
+from auctions.tests.factories import build_image, create_seller
 
 User = get_user_model()
 
 
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
 class AuctionCreateViewTests(TestCase):
     def setUp(self):
-        self.seller = User.objects.create_user(
-            email="vendedor@bidhaus.co",
-            password="clave-de-prueba",
-            full_name="Vendedora de prueba",
-            role=User.Role.SELLER,
-        )
+        self.seller = create_seller()
         self.category = Category.objects.create(name="Fotografía")
         self.url = reverse("auctions:auction_create")
 
@@ -34,6 +32,7 @@ class AuctionCreateViewTests(TestCase):
             "condition": Auction.Condition.USED,
             "starting_price": "250000",
             "closing_date": closing_date.strftime(DATETIME_LOCAL_FORMAT),
+            "images": [build_image()],
         }
         payload.update(overrides)
         return self.client.post(self.url, payload)
@@ -51,6 +50,25 @@ class AuctionCreateViewTests(TestCase):
         self.assertRedirects(
             response, reverse("auctions:auction_photographs", args=[auction.pk])
         )
+
+    def test_stores_the_photograph_that_came_with_the_form(self):
+        self.post(images=[build_image(), build_image()])
+
+        self.assertEqual(Auction.objects.get().photographs.count(), 2)
+
+    def test_requires_at_least_one_photograph(self):
+        response = self.post(images=[])
+
+        self.assertEqual(Auction.objects.count(), 0)
+        self.assertContains(response, "Este campo es obligatorio.")
+
+    def test_reports_more_photographs_than_an_auction_admits(self):
+        images = [build_image() for _ in range(MAX_PHOTOGRAPHS + 1)]
+
+        response = self.post(images=images)
+
+        self.assertEqual(Auction.objects.count(), 0)
+        self.assertContains(response, "admite 8 fotografías como máximo")
 
     def test_offers_only_registered_sellers_as_authors(self):
         bidder = User.objects.create_user(

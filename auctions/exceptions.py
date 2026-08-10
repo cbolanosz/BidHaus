@@ -9,6 +9,10 @@ class NotASeller(AuctionError):
     """Only a user registered with the seller role may publish an auction."""
 
 
+class BidIsImmutable(AuctionError):
+    """A bid cannot be modified nor deleted once it is registered (DBR04)."""
+
+
 class NoPhotographs(AuctionError):
     """An upload must carry at least one photograph."""
 
