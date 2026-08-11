@@ -243,20 +243,7 @@ Quit the server with CONTROL-C.
 
 ---
 
-## Running the Tests
-
-```bash
-python manage.py test
-```
-
-The suite covers every service function: publishing, photograph limits, catalogue search,
-the bid history and its immutability, and the bidding rules — including a case with 20
-concurrent bidders.
-
-```
-Ran 83 tests
-OK
-```
++
 
 The tests use a **file-based** SQLite database (`test_db.sqlite3`) instead of the in-memory
 default, because WAL mode and the lock timeout that the bidding service relies on only exist
