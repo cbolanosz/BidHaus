@@ -7,3 +7,5 @@ media/
 .env
 .claude/settings.local.json
 test_db.sqlite3*
+CLAUDE.md
+fa
