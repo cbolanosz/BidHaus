@@ -243,8 +243,6 @@ Quit the server with CONTROL-C.
 
 ---
 
-+
-
 The tests use a **file-based** SQLite database (`test_db.sqlite3`) instead of the in-memory
 default, because WAL mode and the lock timeout that the bidding service relies on only exist
 on a real file.
