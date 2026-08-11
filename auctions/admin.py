@@ -23,7 +23,7 @@ class AuctionAdmin(admin.ModelAdmin):
     list_display = ["title", "seller", "category", "condition", "current_price", "closing_date", "state"]
     list_filter = ["state", "condition", "category"]
     search_fields = ["title", "description"]
-    readonly_fields = ["published_at"]
+    readonly_fields = ["published_at", "winning_bid"]
 
 
 @admin.register(Bid)

@@ -23,12 +23,26 @@ no CDN. The only third-party dependencies are Django and Pillow.
 
 ## Environment
 
+The project is developed on more than one machine. It runs the same on all of them, because
+the only requirements are Python and the two packages in `requirements.txt`.
+
+**Machine 1 — Cristian**
+
 - **Operating System:** Fedora Linux 44, kernel 7.1.5-200.fc44.x86_64, x64-based PC
 - **Processor:** 13th Gen Intel(R) Core(TM) i5-13420H, 12 CPUs
 - **Memory:** 16 GB RAM, 475 GB disk
 - **Terminal:** GNU bash 5.3.9 (x86_64-redhat-linux-gnu)
 - **Python:** 3.14.6
-- **Django:** 6.0.7 · **Pillow:** 12.3.0
+
+**Machine 2 — _(name)_**
+
+- **Operating System:** _(fill in)_
+- **Processor:** _(fill in)_
+- **Memory:** _(fill in)_
+- **Terminal:** _(fill in)_
+- **Python:** _(fill in)_
+
+**Shared across every machine:** Django 6.0.7 · Pillow 12.3.0 · SQLite (bundled with Python)
 
 ---
 

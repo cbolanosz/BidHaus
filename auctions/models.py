@@ -38,6 +38,10 @@ class AuctionQuerySet(models.QuerySet):
     def open(self):
         return self.filter(state=Auction.State.OPEN)
 
+    def expired(self):
+        """Auctions still open although their closing date has already passed."""
+        return self.open().filter(closing_date__lte=timezone.now())
+
     def matching_text(self, text):
         if not text:
             return self
@@ -106,6 +110,14 @@ class Auction(models.Model):
     current_price = models.DecimalField("precio actual", max_digits=12, decimal_places=2)
     closing_date = models.DateTimeField("fecha de cierre")
     state = models.CharField("estado", max_length=20, choices=State.choices, default=State.OPEN)
+    winning_bid = models.ForeignKey(
+        "Bid",
+        on_delete=models.PROTECT,
+        related_name="+",
+        null=True,
+        blank=True,
+        verbose_name="puja ganadora",
+    )
     published_at = models.DateTimeField("fecha de publicación", auto_now_add=True)
 
     objects = AuctionQuerySet.as_manager()

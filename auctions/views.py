@@ -17,6 +17,7 @@ from auctions.forms import AuctionForm, AuctionSearchForm, BidForm, PhotographUp
 from auctions.models import MAX_PHOTOGRAPHS, Auction
 from auctions.services import (
     add_photographs,
+    close_auction_if_expired,
     count_free_photograph_slots,
     find_auction,
     list_bids,
@@ -78,8 +79,13 @@ def auction_create(request):
 
 
 def auction_detail(request, auction_id):
-    """Show an auction with its photographs and its complete bid history (FR04)."""
-    return _render_auction_detail(request, _find_auction_or_404(auction_id), BidForm())
+    """Show an auction with its photographs and its complete bid history (FR04).
+
+    The auction is closed first if its date has passed, so that a visitor never
+    sees a countdown on an auction that is already over (FR07).
+    """
+    auction = close_auction_if_expired(_find_auction_or_404(auction_id))
+    return _render_auction_detail(request, auction, BidForm())
 
 
 def auction_bid(request, auction_id):

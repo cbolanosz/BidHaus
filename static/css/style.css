@@ -658,6 +658,11 @@ input[type="file"]::file-selector-button {
     color: var(--ink-2);
 }
 
+.winner {
+    color: var(--ink-2);
+    font-size: 0.95rem;
+}
+
 .facts {
     display: grid;
     grid-template-columns: auto 1fr;

@@ -57,6 +57,14 @@
             </form>
         {% else %}
             <span class="pill pill-quiet">Subasta {{ auction.get_state_display|lower }}</span>
+            {% if auction.winning_bid %}
+                <p class="winner">
+                    Ganó {{ auction.winning_bid.bidder.full_name }} con
+                    <span class="money">$ {{ auction.winning_bid.amount|floatformat:0|intcomma }} COP</span>.
+                </p>
+            {% else %}
+                <p class="winner">Cerró sin pujas.</p>
+            {% endif %}
         {% endif %}
 
         <dl class="facts">
@@ -82,7 +90,7 @@
                 <li class="rung{% if forloop.first %} rung-lead{% endif %}">
                     <p class="amount money">$ {{ bid.amount|floatformat:0|intcomma }}</p>
                     <p class="who">
-                        {{ bid.bidder.full_name }}{% if forloop.first %} · puja más alta{% endif %}
+                        {{ bid.bidder.full_name }}{% if bid.pk == auction.winning_bid_id %} · puja ganadora{% elif forloop.first %} · puja más alta{% endif %}
                     </p>
                     <p class="when">{{ bid.timestamp|date:"d/m/Y H:i" }}</p>
                 </li>

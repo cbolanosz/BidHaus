@@ -80,7 +80,50 @@ def search_auctions(text=None, category=None, condition=None, minimum_price=None
 
 def find_auction(auction_id):
     """Return the auction with that identifier, or raise Auction.DoesNotExist."""
-    return Auction.objects.select_related("seller", "category").get(pk=auction_id)
+    return Auction.objects.select_related(
+        "seller", "category", "winning_bid__bidder"
+    ).get(pk=auction_id)
+
+
+def close_expired_auctions():
+    """Close every auction whose closing date has already passed (FR07).
+
+    Idempotent: an auction that is no longer open is not selected again, so
+    running this twice closes nothing the second time. Returns what it closed.
+    """
+    expired_auctions = list(Auction.objects.expired())
+    for auction in expired_auctions:
+        close_auction(auction)
+    return expired_auctions
+
+
+def close_auction_if_expired(auction):
+    """Close an auction that is served after its closing date (FR07).
+
+    Django has no scheduler, so between two runs of the close_auctions command
+    an auction can be requested while it is already past its time. Closing it
+    on access keeps what the visitor sees honest.
+    """
+    if auction.is_open and auction.closing_date <= timezone.now():
+        close_auction(auction)
+    return auction
+
+
+@transaction.atomic
+def close_auction(auction):
+    """Close an open auction and mark its highest bid as the winner (FR07, FR08).
+
+    The bids are ordered by descending amount and then by time, so the first one
+    is the highest and, on a tie, the one that arrived first. An auction that
+    nobody bid on closes with no winning bid.
+    """
+    if not auction.is_open:
+        return auction
+
+    auction.state = Auction.State.CLOSED
+    auction.winning_bid = auction.bids.first()
+    auction.save(update_fields=["state", "winning_bid"])
+    return auction
 
 
 def list_photographs(auction):
