@@ -171,6 +171,7 @@ def auction_photographs(request, auction_id):
 
 def _render_photograph_page(request, auction, form):
     """Render the photograph page with the state the seller needs to see."""
+    free_slots = count_free_photograph_slots(auction)
     return render(
         request,
         "auctions/photograph_form.html",
@@ -178,7 +179,8 @@ def _render_photograph_page(request, auction, form):
             "auction": auction,
             "form": form,
             "photographs": list_photographs(auction),
-            "free_slots": count_free_photograph_slots(auction),
+            "free_slots": free_slots,
+            "empty_slots": range(free_slots),
             "max_photographs": MAX_PHOTOGRAPHS,
         },
     )

@@ -1,10 +1,21 @@
 {% extends "base.html" %}
-{% load humanize %}
+{% load humanize auction_formats %}
 
 {% block title %}Subastas — BidHaus{% endblock %}
 
 {% block content %}
-<h1>Subastas abiertas</h1>
+<section class="hero">
+    <p class="eyebrow">Casa de subastas en línea</p>
+    <h1>Subastas abiertas</h1>
+    <p class="hero-lede">
+        {% if auctions %}
+            {{ auctions|length }} lote{{ auctions|length|pluralize }} en puja ahora mismo.
+        {% else %}
+            Ningún lote coincide con estos filtros.
+        {% endif %}
+        Cada vendedor está verificado y el pago queda en custodia hasta que confirmes que recibiste el artículo.
+    </p>
+</section>
 
 <form method="get" class="filters">
     {% for field in form %}
@@ -18,29 +29,42 @@
             {% endif %}
         </div>
     {% endfor %}
-    <button type="submit">Filtrar</button>
+    <div class="form-actions">
+        <button class="button" type="submit">Filtrar</button>
+        <a class="button button-quiet" href="{% url 'auctions:catalogue' %}">Limpiar</a>
+    </div>
 </form>
 
 {% if auctions %}
-    <ul class="auction-grid">
+    <ul class="lots">
         {% for auction in auctions %}
-            <li class="auction-card">
-                <a href="{% url 'auctions:auction_detail' auction.pk %}">
+            <li>
+                <a class="lot" href="{% url 'auctions:auction_detail' auction.pk %}">
                     {% if auction.main_photograph %}
-                        <img src="{{ auction.main_photograph.image.url }}" alt="Fotografía de {{ auction.title }}">
+                        <div class="lot-figure">
+                            <img src="{{ auction.main_photograph.image.url }}" alt="Fotografía de {{ auction.title }}">
+                        </div>
                     {% else %}
-                        <p class="no-photograph">Sin fotografías</p>
+                        <div class="lot-figure is-empty">Sin fotografías</div>
                     {% endif %}
+
+                    <div class="lot-body">
+                        <p class="eyebrow">Lote {{ auction.pk|stringformat:"03d" }}</p>
+                        <h2 class="lot-title">{{ auction.title }}</h2>
+                        <p class="lot-price money">
+                            $ {{ auction.current_price|floatformat:0|intcomma }}<small>COP</small>
+                        </p>
+                        <p class="lot-meta">{{ auction.category.name }} · {{ auction.get_condition_display }}</p>
+                        <p class="lot-closing">Cierra en {{ auction.closing_date|timeuntil|largest_time_unit }}</p>
+                    </div>
                 </a>
-                <h2><a href="{% url 'auctions:auction_detail' auction.pk %}">{{ auction.title }}</a></h2>
-                <p class="price">$ {{ auction.current_price|floatformat:0|intcomma }} COP</p>
-                <p class="meta">{{ auction.category.name }} · {{ auction.get_condition_display }}</p>
-                <p class="meta">Cierra el {{ auction.closing_date|date:"d/m/Y H:i" }}</p>
-                <p class="meta">Vendedor: {{ auction.seller.full_name }}</p>
             </li>
         {% endfor %}
     </ul>
 {% else %}
-    <p>No hay subastas que coincidan con la búsqueda.</p>
+    <div class="empty">
+        <p class="empty-title">Ningún lote coincide</p>
+        <p>Prueba con otra categoría o amplía el rango de precio.</p>
+    </div>
 {% endif %}
 {% endblock %}

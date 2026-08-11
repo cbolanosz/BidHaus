@@ -3,30 +3,42 @@
 {% block title %}Publicar subasta — BidHaus{% endblock %}
 
 {% block content %}
-<h1>Publicar una subasta</h1>
+<div class="section-head">
+    <h1>Publica tu artículo</h1>
+    <p class="lede">Describe el lote y súbelo con al menos una fotografía.</p>
+</div>
 
-<form method="post" enctype="multipart/form-data" class="form" novalidate>
-    {% csrf_token %}
+<ol class="steps">
+    <li class="current">Paso 1 · Datos del artículo</li>
+    <li>Paso 2 · Más fotografías</li>
+</ol>
 
-    {% if form.non_field_errors %}
-        <ul class="errors">
-            {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
-        </ul>
-    {% endif %}
+<div class="panel">
+    <form method="post" enctype="multipart/form-data" class="form" novalidate>
+        {% csrf_token %}
 
-    {% for field in form %}
-        <div class="field">
-            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-            {{ field }}
-            {% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}
-            {% if field.errors %}
-                <ul class="errors">
-                    {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
-                </ul>
-            {% endif %}
+        {% if form.non_field_errors %}
+            <ul class="errors">
+                {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+        {% endif %}
+
+        {% for field in form %}
+            <div class="field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}
+                {% if field.errors %}
+                    <ul class="errors">
+                        {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <div class="form-actions">
+            <button class="button" type="submit">Publicar</button>
         </div>
-    {% endfor %}
-
-    <button type="submit">Publicar</button>
-</form>
+    </form>
+</div>
 {% endblock %}

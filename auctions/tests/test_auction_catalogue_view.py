@@ -46,7 +46,7 @@ class AuctionCatalogueViewTests(TestCase):
     def test_tells_the_visitor_when_nothing_matches(self):
         response = self.client.get(self.url, {"text": "algo que no existe"})
 
-        self.assertContains(response, "No hay subastas que coincidan con la búsqueda.")
+        self.assertContains(response, "Ningún lote coincide")
 
     def test_shows_the_first_photograph_of_each_auction(self):
         auction = create_auction(title="Cámara Yashica FX-3")

@@ -49,7 +49,7 @@ class AuctionDetailViewTests(TestCase):
     def test_tells_the_visitor_when_there_are_no_bids_yet(self):
         response = self.client.get(self.url)
 
-        self.assertContains(response, "Esta subasta aún no tiene pujas.")
+        self.assertContains(response, "Todavía nadie ha pujado")
 
     def test_reads_the_page_with_a_fixed_number_of_queries(self):
         for amount in range(300000, 310000, 1000):

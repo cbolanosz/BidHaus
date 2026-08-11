@@ -1,234 +1,284 @@
-/* BidHaus — plain CSS, no framework. Contrast ratios meet WCAG 2.1 AA (UR06). */
+/* BidHaus — plain CSS, no framework.
+ *
+ * The name is a nod to the Bauhaus, so the accents are its primaries — cobalt
+ * for every action, amber reserved for the closing countdown — set inside the
+ * restraint of a near-white canvas and generous whitespace.
+ *
+ * Every text pair below is measured against WCAG 2.1 AA (UR06): the lowest
+ * ratio in use is 5.52:1, the accents reach 8:1. Amber only ever carries ink.
+ */
 
 :root {
-    --ink: #1b1b1f;
-    --ink-soft: #4a4a55;
-    --paper: #fdfdfb;
-    --surface: #ffffff;
-    --line: #c9c9d1;
-    --accent: #1f4b99;
-    --error: #a4131e;
-    --success: #14562f;
+    --ink: #14171A;
+    --ink-2: #5A6470;
+    --canvas: #F5F5F7;
+    --surface: #FFFFFF;
+    --line: #DFE3E8;
+    --cobalt: #1B3BD4;
+    --cobalt-deep: #12299A;
+    --amber: #F5C518;
+    --danger: #B3121F;
+    --success: #0A6E3C;
+
+    /* One family for the whole page: SF on Apple, Segoe UI on Windows, Noto Sans
+     * on Linux. Hierarchy comes from size, weight, spacing and colour — never
+     * from a second typeface. The logo is the only place with a face of its own. */
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Noto Sans", system-ui, sans-serif;
+
+    --radius: 14px;
+    --radius-sm: 9px;
+    --shell: 68rem;
 }
 
-* {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
 }
 
 body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
     margin: 0;
-    background: var(--paper);
+    background: var(--surface);
     color: var(--ink);
-    font-family: system-ui, sans-serif;
-    line-height: 1.5;
+    font-family: var(--sans);
+    font-size: 1rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
 }
 
-.site-header {
+h1,
+h2,
+h3 {
+    margin: 0;
+    font-weight: 700;
+    letter-spacing: -0.022em;
+    line-height: 1.1;
+}
+
+h1 {
+    font-size: clamp(1.9rem, 1.3rem + 2.4vw, 3rem);
+    letter-spacing: -0.032em;
+}
+
+h2 {
+    font-size: 1.35rem;
+}
+
+p {
+    margin: 0;
+}
+
+a {
+    color: var(--cobalt-deep);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+}
+
+img {
+    display: block;
+    max-width: 100%;
+}
+
+:focus-visible {
+    outline: 2px solid var(--cobalt);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* ---------- Shell ---------- */
+
+.shell {
+    width: 100%;
+    max-width: var(--shell);
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+.masthead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.86);
+    backdrop-filter: saturate(180%) blur(16px);
+}
+
+.masthead-inner {
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
     align-items: center;
     justify-content: space-between;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--line);
-    background: var(--surface);
+    min-height: 3.75rem;
+    padding-block: 0.75rem;
 }
 
-.site-name {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--ink);
+.wordmark {
+    display: inline-flex;
+    align-items: center;
     text-decoration: none;
 }
 
-nav a {
-    color: var(--accent);
+.wordmark img {
+    width: auto;
+    height: 2rem;
+}
+
+.masthead nav {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.masthead nav a {
+    padding: 0.4rem 0.2rem;
+    color: var(--ink-2);
+    font-size: 0.95rem;
+    text-decoration: none;
+}
+
+.masthead nav a:hover {
+    color: var(--ink);
+}
+
+.masthead nav a.button {
+    color: var(--surface);
 }
 
 .content {
-    max-width: 48rem;
-    margin: 0 auto;
-    padding: 1.5rem;
+    flex: 1;
+    padding-block: 2.5rem 4.5rem;
 }
 
-.site-footer {
-    padding: 1.5rem;
-    border-top: 1px solid var(--line);
-    color: var(--ink-soft);
-    font-size: 0.9rem;
+/* ---------- Hero ---------- */
+
+.hero {
+    padding: 3rem 0 2.5rem;
     text-align: center;
 }
 
-.messages {
-    margin: 0 0 1.5rem;
-    padding: 0;
-    list-style: none;
+.hero .eyebrow {
+    color: var(--cobalt);
 }
 
-.message {
-    padding: 0.75rem 1rem;
-    border-left: 4px solid var(--accent);
+.hero h1 {
+    margin-top: 0.75rem;
+    font-size: clamp(2rem, 1.4rem + 2.2vw, 3rem);
+}
+
+.hero-lede {
+    margin: 1rem auto 0;
+    max-width: 48ch;
+    color: var(--ink-2);
+    font-size: 1.1rem;
+}
+
+.site-footer {
+    border-top: 1px solid var(--line);
     background: var(--surface);
 }
 
-.message-success {
-    border-left-color: var(--success);
-}
-
-.counter {
-    color: var(--ink-soft);
-}
-
-nav {
-    display: flex;
-    gap: 1rem;
-}
-
-.filters {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-    gap: 1rem;
-    align-items: end;
-    margin-bottom: 2rem;
-    padding: 1rem;
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    background: var(--surface);
-}
-
-.auction-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-    gap: 1.25rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.auction-card {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    padding: 1rem;
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    background: var(--surface);
-}
-
-.auction-card img,
-.auction-card .no-photograph {
-    width: 100%;
-    height: 10rem;
-    border-radius: 4px;
-    object-fit: cover;
-}
-
-.auction-card .no-photograph {
-    display: grid;
-    place-items: center;
-    margin: 0;
-    border: 1px dashed var(--line);
-    color: var(--ink-soft);
-    font-size: 0.9rem;
-}
-
-.auction-card h2 {
-    margin: 0;
-    font-size: 1.05rem;
-}
-
-.auction-card h2 a {
-    color: var(--ink);
-    text-decoration: none;
-}
-
-.auction-card h2 a:hover {
-    text-decoration: underline;
-}
-
-.detail .price {
-    margin: 0.5rem 0 0;
-    font-size: 1.6rem;
-    font-weight: 700;
-}
-
-.countdown {
-    margin: 0.25rem 0 1.5rem;
-    color: var(--ink-soft);
-}
-
-.attributes {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 0.35rem 1rem;
-    margin: 0 0 1.5rem;
-}
-
-.attributes dt {
-    color: var(--ink-soft);
-}
-
-.attributes dd {
-    margin: 0;
-}
-
-.bids {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.bids th,
-.bids td {
-    padding: 0.5rem 0.65rem;
-    border-bottom: 1px solid var(--line);
-    text-align: left;
-}
-
-.bids tbody tr:first-child td {
-    font-weight: 700;
-}
-
-.auction-card .price {
-    margin: 0;
-    font-size: 1.15rem;
-    font-weight: 700;
-}
-
-.auction-card .meta {
-    margin: 0;
-    color: var(--ink-soft);
+.site-footer p {
+    padding-block: 1.75rem;
+    color: var(--ink-2);
     font-size: 0.875rem;
 }
 
-.photograph-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
-    gap: 0.75rem;
-    margin: 0 0 1.5rem;
-    padding: 0;
-    list-style: none;
+/* ---------- Type utilities ---------- */
+
+.eyebrow {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-2);
 }
 
-.photograph-grid img {
-    width: 100%;
-    height: 9rem;
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    object-fit: cover;
+.lede {
+    margin-top: 0.6rem;
+    color: var(--ink-2);
+    font-size: 1.05rem;
 }
+
+.section-head {
+    margin-bottom: 1.5rem;
+}
+
+.section-head h1 {
+    font-size: clamp(1.75rem, 1.3rem + 1.5vw, 2.35rem);
+    letter-spacing: -0.026em;
+}
+
+.money {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+}
+
+/* ---------- Buttons ---------- */
+
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.6rem 1.25rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: var(--cobalt);
+    color: var(--surface);
+    font: inherit;
+    font-weight: 600;
+    line-height: 1.2;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.button:hover {
+    background: var(--cobalt-deep);
+}
+
+.button:active {
+    transform: scale(0.98);
+}
+
+.button-quiet {
+    border-color: var(--line);
+    background: var(--surface);
+    color: var(--ink);
+}
+
+.button-quiet:hover {
+    background: var(--canvas);
+    color: var(--ink);
+}
+
+/* ---------- Cards and panels ---------- */
+
+.panel {
+    max-width: 40rem;
+    padding: 1.75rem;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: var(--surface);
+}
+
+/* ---------- Forms ---------- */
 
 .form {
     display: grid;
     gap: 1.25rem;
-    max-width: 34rem;
 }
 
 .field {
     display: grid;
-    gap: 0.35rem;
+    gap: 0.4rem;
 }
 
 label {
+    font-size: 0.9rem;
     font-weight: 600;
 }
 
@@ -236,46 +286,564 @@ input,
 select,
 textarea {
     width: 100%;
-    padding: 0.55rem 0.65rem;
+    padding: 0.6rem 0.75rem;
     border: 1px solid var(--line);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background: var(--surface);
     color: var(--ink);
     font: inherit;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-    outline: 2px solid var(--accent);
-    outline-offset: 1px;
+    border-color: var(--cobalt);
+    box-shadow: 0 0 0 3px rgba(27, 59, 212, 0.16);
+    outline: none;
 }
 
-.help {
-    margin: 0;
-    color: var(--ink-soft);
-    font-size: 0.875rem;
+textarea {
+    resize: vertical;
 }
 
-.errors {
+input[type="number"] {
+    appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    appearance: none;
     margin: 0;
-    padding-left: 1.1rem;
-    color: var(--error);
+}
+
+input[type="file"] {
+    padding: 0.5rem;
+    color: var(--ink-2);
     font-size: 0.9rem;
 }
 
-button {
-    justify-self: start;
-    padding: 0.6rem 1.4rem;
-    border: none;
-    border-radius: 4px;
-    background: var(--accent);
-    color: #ffffff;
+input[type="file"]::file-selector-button {
+    margin-right: 0.75rem;
+    padding: 0.45rem 0.9rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--canvas);
+    color: var(--ink);
     font: inherit;
     font-weight: 600;
     cursor: pointer;
 }
 
-button:hover {
-    background: #16386f;
+.help {
+    color: var(--ink-2);
+    font-size: 0.85rem;
+}
+
+.errors {
+    display: grid;
+    gap: 0.15rem;
+    margin: 0;
+    padding-left: 1.05rem;
+    color: var(--danger);
+    font-size: 0.875rem;
+}
+
+.form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+/* ---------- Banners ---------- */
+
+.banners {
+    display: grid;
+    gap: 0.6rem;
+    margin-bottom: 2rem;
+    padding: 0;
+    list-style: none;
+}
+
+.banner {
+    padding: 0.85rem 1.1rem;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--cobalt);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    font-size: 0.95rem;
+}
+
+.banner-success {
+    border-left-color: var(--success);
+}
+
+.banner-error {
+    border-left-color: var(--danger);
+}
+
+/* ---------- Steps (publish is a real two-step flow) ---------- */
+
+.steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    margin-bottom: 1.75rem;
+    padding: 0;
+    list-style: none;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+}
+
+.steps .current {
+    color: var(--ink);
+}
+
+.steps .current::before {
+    content: "";
+    display: inline-block;
+    width: 0.45rem;
+    height: 0.45rem;
+    margin-right: 0.45rem;
+    border-radius: 50%;
+    background: var(--cobalt);
+    vertical-align: 0.05rem;
+}
+
+/* ---------- Filters ---------- */
+
+.filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    gap: 1.1rem 1.25rem;
+    align-items: end;
+    margin: 0 0 3rem;
+    padding: 1.5rem 0 2rem;
+    border-bottom: 1px solid var(--line);
+}
+
+.filters .form-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    padding-top: 0.35rem;
+}
+
+/* ---------- Lot grid ---------- */
+
+.lots {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    gap: 1.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lot {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    color: inherit;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+}
+
+.lot:hover {
+    opacity: 0.82;
+}
+
+.lot-figure {
+    aspect-ratio: 4 / 3;
+    border-radius: 16px;
+    background: var(--canvas);
+    overflow: hidden;
+}
+
+.lot-figure img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.lot-figure.is-empty {
+    display: grid;
+    place-items: center;
+    color: var(--ink-2);
+    font-size: 0.85rem;
+}
+
+.lot-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1.1rem 0 0;
+}
+
+.lot-title {
+    font-size: 1.05rem;
+    letter-spacing: -0.018em;
+    line-height: 1.3;
+}
+
+.lot-price {
+    margin-top: 0.15rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.lot-price small {
+    margin-left: 0.2rem;
+    color: var(--ink-2);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+.lot-meta {
+    padding-top: 0.15rem;
+    color: var(--ink-2);
+    font-size: 0.85rem;
+}
+
+.lot-closing {
+    margin-top: auto;
+    padding-top: 0.5rem;
+    color: var(--ink-2);
+    font-size: 0.85rem;
+}
+
+/* ---------- Empty state ---------- */
+
+.empty {
+    padding: 3.5rem 1.5rem;
+    border: 1px dashed var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    text-align: center;
+}
+
+.empty p {
+    color: var(--ink-2);
+}
+
+.empty-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+}
+
+.empty-title + p {
+    margin-top: 0.35rem;
+}
+
+/* ---------- Detail ---------- */
+
+.lot-head {
+    margin-bottom: 2rem;
+}
+
+.lot-head h1 {
+    max-width: 30ch;
+    font-size: clamp(1.75rem, 1.3rem + 1.5vw, 2.35rem);
+    letter-spacing: -0.026em;
+    line-height: 1.15;
+}
+
+.lot-head .eyebrow {
+    display: block;
+    margin-bottom: 0.6rem;
+}
+
+.detail {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    gap: 2.5rem;
+    align-items: start;
+}
+
+.gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.gallery li {
+    width: 6.5rem;
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    overflow: hidden;
+}
+
+.gallery li:first-child {
+    width: 100%;
+    border-radius: 18px;
+}
+
+.gallery img {
+    width: 100%;
+    height: 5rem;
+    object-fit: cover;
+}
+
+.gallery li:first-child img {
+    height: 26rem;
+    object-fit: cover;
+}
+
+.gallery .is-empty {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 16rem;
+    border-radius: 18px;
+    background: var(--canvas);
+    color: var(--ink-2);
+    font-size: 0.9rem;
+}
+
+.bid-panel {
+    position: sticky;
+    top: 5rem;
+    display: grid;
+    gap: 1.35rem;
+    padding: 1.75rem;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: var(--surface);
+}
+
+.price-now {
+    display: grid;
+    gap: 0.15rem;
+}
+
+.price-now .amount {
+    font-size: clamp(2rem, 1.4rem + 2vw, 2.6rem);
+    font-weight: 700;
+}
+
+.price-now .amount small {
+    margin-left: 0.3rem;
+    color: var(--ink-2);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.pill {
+    display: inline-flex;
+    align-items: center;
+    align-self: start;
+    justify-self: start;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    background: var(--amber);
+    color: var(--ink);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.pill-quiet {
+    border: 1px solid var(--line);
+    background: var(--canvas);
+    color: var(--ink-2);
+}
+
+.facts {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem 1.25rem;
+    margin: 0;
+    padding-top: 1.35rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.92rem;
+}
+
+.facts dt {
+    color: var(--ink-2);
+}
+
+.facts dd {
+    margin: 0;
+    text-align: right;
+}
+
+.prose {
+    margin-top: 3.5rem;
+    max-width: 42rem;
+}
+
+.prose p {
+    margin-top: 0.9rem;
+    color: var(--ink-2);
+}
+
+/* ---------- The bid ladder: the history is a price rising over time ---------- */
+
+.ladder {
+    margin-top: 3.5rem;
+}
+
+.rungs {
+    display: grid;
+    gap: 0;
+    margin: 1.25rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.rung {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.25rem 1rem;
+    padding: 1rem 0 1rem 2rem;
+    border-bottom: 1px solid var(--line);
+}
+
+.rung::before {
+    content: "";
+    position: absolute;
+    top: 1.35rem;
+    left: 0.29rem;
+    width: 0.6rem;
+    height: 0.6rem;
+    border: 2px solid var(--line);
+    border-radius: 50%;
+    background: var(--surface);
+}
+
+.rung::after {
+    content: "";
+    position: absolute;
+    top: 1.95rem;
+    bottom: -1px;
+    left: 0.55rem;
+    width: 1px;
+    background: var(--line);
+}
+
+.rung:last-child::after {
+    display: none;
+}
+
+.rung-lead {
+    background: transparent;
+}
+
+.rung-lead::before {
+    border-color: var(--cobalt);
+    background: var(--cobalt);
+}
+
+.rung .amount {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--ink-2);
+}
+
+.rung-lead .amount {
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: var(--cobalt);
+}
+
+.rung .who {
+    grid-column: 1;
+    color: var(--ink-2);
+    font-size: 0.9rem;
+}
+
+.rung-lead .who {
+    color: var(--ink);
+}
+
+.rung .when {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    align-self: center;
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-2);
+}
+
+/* ---------- Photograph meter: 8 slots, the real limit of DBR03 ---------- */
+
+.meter {
+    display: flex;
+    gap: 0.3rem;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.meter li {
+    width: 1.5rem;
+    height: 0.35rem;
+    border-radius: 2px;
+    background: var(--line);
+}
+
+.meter .filled {
+    background: var(--cobalt);
+}
+
+.thumbs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+    gap: 0.75rem;
+    margin: 1.5rem 0 2.5rem;
+    padding: 0;
+    list-style: none;
+}
+
+.thumbs img {
+    width: 100%;
+    height: 8rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+}
+
+/* ---------- Narrow viewports ---------- */
+
+@media (max-width: 56rem) {
+    .detail {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 2rem;
+    }
+
+    .bid-panel {
+        position: static;
+    }
+}
+
+@media (max-width: 30rem) {
+    .shell {
+        padding: 0 1.1rem;
+    }
+
+    .masthead nav {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .facts dd {
+        text-align: left;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+    }
 }

@@ -76,6 +76,8 @@ class AuctionForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["seller"].queryset = User.objects.sellers()
         self.fields["seller"].empty_label = "Elige un vendedor registrado"
+        self.fields["category"].empty_label = "Elige una categoría"
+        self.fields["condition"].choices = [("", "Elige el estado")] + Auction.Condition.choices
         self.fields["closing_date"].input_formats = [DATETIME_LOCAL_FORMAT]
         self.fields["description"].help_text = "Describe el artículo, su uso y sus defectos."
 

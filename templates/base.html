@@ -5,22 +5,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}BidHaus{% endblock %}</title>
+    <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
-    <header class="site-header">
-        <a class="site-name" href="{% url 'auctions:catalogue' %}">BidHaus</a>
-        <nav>
-            <a href="{% url 'auctions:catalogue' %}">Subastas</a>
-            <a href="{% url 'auctions:auction_create' %}">Publicar subasta</a>
-        </nav>
+    <header class="masthead">
+        <div class="shell masthead-inner">
+            <a class="wordmark" href="{% url 'auctions:catalogue' %}">
+                <img src="{% static 'img/logo-horizontal.svg' %}" alt="BidHaus" width="128" height="32">
+            </a>
+            <nav>
+                <a href="{% url 'auctions:catalogue' %}">Subastas</a>
+                <a class="button" href="{% url 'auctions:auction_create' %}">Publicar subasta</a>
+            </nav>
+        </div>
     </header>
 
-    <main class="content">
+    <main class="shell content">
         {% if messages %}
-            <ul class="messages">
+            <ul class="banners">
                 {% for message in messages %}
-                    <li class="message message-{{ message.tags }}">{{ message }}</li>
+                    <li class="banner banner-{{ message.tags }}">{{ message }}</li>
                 {% endfor %}
             </ul>
         {% endif %}
@@ -29,7 +34,9 @@
     </main>
 
     <footer class="site-footer">
-        <p>BidHaus — proyecto académico. Los pagos son simulados.</p>
+        <div class="shell">
+            <p>BidHaus — proyecto académico de la Universidad EAFIT. Los pagos son simulados.</p>
+        </div>
     </footer>
 </body>
 </html>
