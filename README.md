@@ -16,7 +16,7 @@ no CDN. The only third-party dependencies are Django and Pillow.
 - **Team:** Only code
 - **Class:** ST0251
 - **Course:** Proyecto Integrador 1
-- **Professor:** _(fill in)_
+- **Professor:** Paola Vallejo
 - **University:** Universidad EAFIT — 2026-2
 
 ---
