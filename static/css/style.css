@@ -340,6 +340,14 @@ input[type="file"]::file-selector-button {
     font-size: 0.85rem;
 }
 
+/* Django writes the password rules as a list inside the help text. */
+.help ul {
+    display: grid;
+    gap: 0.15rem;
+    margin: 0;
+    padding-left: 1.05rem;
+}
+
 .errors {
     display: grid;
     gap: 0.15rem;
