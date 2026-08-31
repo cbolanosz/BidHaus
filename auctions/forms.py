@@ -1,7 +1,6 @@
 """Forms of the auctions app: they validate the request, never state changes."""
 
 from django import forms
-from django.contrib.auth import get_user_model
 
 from auctions.models import (
     MAX_PHOTOGRAPHS,
@@ -11,8 +10,6 @@ from auctions.models import (
     Category,
 )
 from auctions.validators import MAX_PHOTOGRAPH_SIZE_MB, validate_photograph_size
-
-User = get_user_model()
 
 DATETIME_LOCAL_FORMAT = "%Y-%m-%dT%H:%M"
 
@@ -49,8 +46,7 @@ class AuctionForm(forms.ModelForm):
     without one, which is what DBR03 requires. The rest, up to MAX_PHOTOGRAPHS,
     are added afterwards on the photograph page.
 
-    The seller is a visible field because sprint 1 has no login yet; it will be
-    taken from the session once FR31 is implemented.
+    The seller is not a field: it is the user in session (FR31).
     """
 
     images = MultipleImageField(
@@ -63,7 +59,7 @@ class AuctionForm(forms.ModelForm):
 
     class Meta:
         model = Auction
-        fields = ["seller", "category", "title", "description", "condition", "starting_price", "closing_date"]
+        fields = ["category", "title", "description", "condition", "starting_price", "closing_date"]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 6}),
             "closing_date": forms.DateTimeInput(
@@ -74,8 +70,6 @@ class AuctionForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["seller"].queryset = User.objects.sellers()
-        self.fields["seller"].empty_label = "Elige un vendedor registrado"
         self.fields["category"].empty_label = "Elige una categoría"
         self.fields["condition"].choices = [("", "Elige el estado")] + Auction.Condition.choices
         self.fields["closing_date"].input_formats = [DATETIME_LOCAL_FORMAT]
@@ -119,15 +113,9 @@ class AuctionSearchForm(forms.Form):
 class BidForm(forms.Form):
     """The amount a bidder offers for an auction (FR05).
 
-    The bidder is a visible field because sprint 1 has no login yet; it will be
-    taken from the session once FR31 is implemented.
+    The bidder is not a field: it is the user in session (FR31).
     """
 
-    bidder = forms.ModelChoiceField(
-        label="Pujador",
-        queryset=User.objects.bidders(),
-        empty_label="Elige un pujador registrado",
-    )
     amount = forms.DecimalField(
         label="Tu puja (COP)", max_digits=12, decimal_places=2, min_value=MINIMUM_PRICE
     )

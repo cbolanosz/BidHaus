@@ -1,5 +1,6 @@
 """Forms of the accounts app: they validate the request, never change state."""
 
+from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 
@@ -18,3 +19,17 @@ class SignUpForm(UserCreationForm):
     class Meta:
         model = User
         fields = ["full_name", "email"]
+
+
+class LoginForm(forms.Form):
+    """Credentials a registered user types to start a session (FR31).
+
+    The password is not stripped: a leading or trailing space belongs to it.
+    """
+
+    email = forms.EmailField(label="Correo electrónico")
+    password = forms.CharField(
+        label="Contraseña",
+        strip=False,
+        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
+    )

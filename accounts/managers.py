@@ -8,14 +8,6 @@ class UserManager(BaseUserManager):
 
     use_in_migrations = True
 
-    def sellers(self):
-        """Users registered with the seller role, the only ones who may publish."""
-        return self.filter(role=self.model.Role.SELLER)
-
-    def bidders(self):
-        """Users registered with the bidder role, the only ones who may bid."""
-        return self.filter(role=self.model.Role.BIDDER)
-
     def create_user(self, email, password=None, **extra_fields):
         """Create a regular user with a normalised email and a hashed password."""
         if not email:

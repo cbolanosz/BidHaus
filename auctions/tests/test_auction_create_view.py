@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from auctions.forms import DATETIME_LOCAL_FORMAT
 from auctions.models import MAX_PHOTOGRAPHS, Auction, Category
-from auctions.tests.factories import build_image, create_seller
+from auctions.tests.factories import build_image, create_bidder, create_seller
 
 User = get_user_model()
 
@@ -21,11 +21,11 @@ class AuctionCreateViewTests(TestCase):
         self.seller = create_seller()
         self.category = Category.objects.create(name="Fotografía")
         self.url = reverse("auctions:auction_create")
+        self.client.force_login(self.seller)
 
     def post(self, **overrides):
         closing_date = timezone.localtime(timezone.now() + timedelta(days=2))
         payload = {
-            "seller": self.seller.pk,
             "category": self.category.pk,
             "title": "Cámara Yashica FX-3",
             "description": "Cámara analógica funcional, con estuche original.",
@@ -70,18 +70,26 @@ class AuctionCreateViewTests(TestCase):
         self.assertEqual(Auction.objects.count(), 0)
         self.assertContains(response, "admite 8 fotografías como máximo")
 
-    def test_offers_only_registered_sellers_as_authors(self):
-        bidder = User.objects.create_user(
-            email="comprador@bidhaus.co",
-            password="clave-de-prueba",
-            full_name="Comprador de prueba",
-            role=User.Role.BIDDER,
-        )
+    def test_publishes_the_auction_in_the_name_of_the_user_in_session(self):
+        self.post()
 
-        response = self.post(seller=bidder.pk)
+        self.assertEqual(Auction.objects.get().seller, self.seller)
+
+    def test_sends_a_visitor_who_is_not_logged_in_to_the_login_page(self):
+        self.client.logout()
+
+        response = self.client.get(self.url)
+
+        self.assertRedirects(response, f"{reverse('accounts:log_in')}?next={self.url}")
+        self.assertEqual(Auction.objects.count(), 0)
+
+    def test_refuses_a_user_whose_role_is_not_seller(self):
+        self.client.force_login(create_bidder())
+
+        response = self.post()
 
         self.assertEqual(Auction.objects.count(), 0)
-        self.assertContains(response, "Escoja una opción válida")
+        self.assertContains(response, "no tiene el rol de vendedor")
 
     def test_reports_an_invalid_closing_date_in_spanish(self):
         past_date = timezone.localtime(timezone.now() - timedelta(days=1))

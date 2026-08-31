@@ -7,3 +7,7 @@ class AccountError(Exception):
 
 class EmailAlreadyRegistered(AccountError):
     """Another account already uses that email address (DBR01)."""
+
+
+class InvalidCredentials(AccountError):
+    """No active account matches that email and that password."""

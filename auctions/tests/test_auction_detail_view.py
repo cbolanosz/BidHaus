@@ -52,8 +52,9 @@ class AuctionDetailViewTests(TestCase):
         self.assertContains(response, "Todavía nadie ha pujado")
 
     def test_reads_the_page_with_a_fixed_number_of_queries(self):
+        """The auction, its photographs and its bids: three, whatever the bid count."""
         for amount in range(300000, 310000, 1000):
             create_bid(self.auction, str(amount))
 
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(3):
             self.client.get(self.url)

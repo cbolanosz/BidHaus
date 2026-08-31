@@ -15,6 +15,14 @@ class AuctionPhotographsViewTests(TestCase):
     def setUp(self):
         self.auction = create_auction()
         self.url = reverse("auctions:auction_photographs", args=[self.auction.pk])
+        self.client.force_login(self.auction.seller)
+
+    def test_sends_a_visitor_who_is_not_logged_in_to_the_login_page(self):
+        self.client.logout()
+
+        response = self.client.get(self.url)
+
+        self.assertRedirects(response, f"{reverse('accounts:log_in')}?next={self.url}")
 
     def test_shows_the_upload_form(self):
         response = self.client.get(self.url)

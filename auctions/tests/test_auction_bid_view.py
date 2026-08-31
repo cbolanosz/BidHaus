@@ -18,9 +18,10 @@ class AuctionBidViewTests(TestCase):
         self.bidder = create_bidder("Laura Gómez")
         self.url = reverse("auctions:auction_bid", args=[self.auction.pk])
         self.detail_url = reverse("auctions:auction_detail", args=[self.auction.pk])
+        self.client.force_login(self.bidder)
 
     def post(self, **overrides):
-        payload = {"bidder": self.bidder.pk, "amount": "300000"}
+        payload = {"amount": "300000"}
         payload.update(overrides)
         return self.client.post(self.url, payload)
 
@@ -57,11 +58,44 @@ class AuctionBidViewTests(TestCase):
         self.assertEqual(Bid.objects.count(), 0)
         self.assertContains(response, "ya está cerrada")
 
-    def test_offers_only_registered_bidders(self):
-        response = self.post(bidder=self.seller.pk)
+    def test_registers_the_bid_in_the_name_of_the_user_in_session(self):
+        self.post()
+
+        self.assertEqual(Bid.objects.get().bidder, self.bidder)
+
+    def test_sends_a_visitor_who_is_not_logged_in_to_the_login_page(self):
+        self.client.logout()
+
+        response = self.post()
+
+        self.assertRedirects(response, f"{reverse('accounts:log_in')}?next={self.url}")
+        self.assertEqual(Bid.objects.count(), 0)
+
+    def test_invites_a_visitor_who_is_not_logged_in_to_sign_in(self):
+        self.client.logout()
+
+        response = self.client.get(self.detail_url)
+
+        self.assertContains(response, "Inicia sesión para pujar")
+        self.assertNotContains(response, "Tu puja (COP)")
+
+    def test_refuses_a_user_whose_role_is_not_bidder(self):
+        self.client.force_login(self.seller)
+
+        response = self.post()
 
         self.assertEqual(Bid.objects.count(), 0)
-        self.assertContains(response, "Escoja una opción válida")
+        self.assertContains(response, "no tiene el rol de comprador")
+
+    def test_refuses_the_owner_of_the_auction(self):
+        own_auction = create_auction(seller=self.bidder)
+
+        response = self.client.post(
+            reverse("auctions:auction_bid", args=[own_auction.pk]), {"amount": "300000"}
+        )
+
+        self.assertEqual(Bid.objects.count(), 0)
+        self.assertContains(response, "no puede pujar en su propia subasta")
 
     def test_hides_the_bid_form_on_an_auction_that_is_not_open(self):
         Auction.objects.filter(pk=self.auction.pk).update(state=Auction.State.CLOSED)

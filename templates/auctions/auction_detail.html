@@ -38,23 +38,29 @@
         {% if auction.is_open %}
             <span class="pill">Cierra en {{ auction.closing_date|timeuntil|largest_time_unit }}</span>
 
-            <form method="post" action="{% url 'auctions:auction_bid' auction.pk %}" class="form" novalidate>
-                {% csrf_token %}
+            {% if user.is_authenticated %}
+                <form method="post" action="{% url 'auctions:auction_bid' auction.pk %}" class="form" novalidate>
+                    {% csrf_token %}
 
-                {% for field in form %}
-                    <div class="field">
-                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                        {{ field }}
-                        {% if field.errors %}
-                            <ul class="errors">
-                                {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
-                            </ul>
-                        {% endif %}
-                    </div>
-                {% endfor %}
+                    {% for field in form %}
+                        <div class="field">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <ul class="errors">
+                                    {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
 
-                <button class="button" type="submit">Pujar</button>
-            </form>
+                    <button class="button" type="submit">Pujar</button>
+                </form>
+            {% else %}
+                <p class="sign-in-to-bid">
+                    <a class="button" href="{% url 'accounts:log_in' %}?next={{ request.path|urlencode }}">Inicia sesión para pujar</a>
+                </p>
+            {% endif %}
         {% else %}
             <span class="pill pill-quiet">Subasta {{ auction.get_state_display|lower }}</span>
             {% if auction.winning_bid %}

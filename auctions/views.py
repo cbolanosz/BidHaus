@@ -1,6 +1,7 @@
 """HTTP layer: parse the request, call a service, render a template."""
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import redirect, render
 
@@ -44,6 +45,7 @@ def auction_catalogue(request):
     return render(request, "auctions/catalogue.html", {"form": form, "auctions": auctions})
 
 
+@login_required
 def auction_create(request):
     """Show the publication form and publish the auction it describes (FR01)."""
     if request.method != "POST":
@@ -55,7 +57,7 @@ def auction_create(request):
 
     try:
         auction = publish_auction(
-            seller=form.cleaned_data["seller"],
+            seller=request.user,
             category=form.cleaned_data["category"],
             title=form.cleaned_data["title"],
             description=form.cleaned_data["description"],
@@ -65,7 +67,7 @@ def auction_create(request):
             images=form.cleaned_data["images"],
         )
     except NotASeller:
-        form.add_error("seller", "Solo un vendedor registrado puede publicar una subasta.")
+        form.add_error(None, "Tu cuenta no tiene el rol de vendedor, así que no puede publicar.")
         return render(request, "auctions/auction_form.html", {"form": form})
     except TooManyPhotographs:
         form.add_error("images", f"Una subasta admite {MAX_PHOTOGRAPHS} fotografías como máximo.")
@@ -88,6 +90,7 @@ def auction_detail(request, auction_id):
     return _render_auction_detail(request, auction, BidForm())
 
 
+@login_required
 def auction_bid(request, auction_id):
     """Register the bid a bidder submitted from the detail page (FR05)."""
     auction = _find_auction_or_404(auction_id)
@@ -102,17 +105,17 @@ def auction_bid(request, auction_id):
     try:
         bid = place_bid(
             auction_id=auction.pk,
-            bidder=form.cleaned_data["bidder"],
+            bidder=request.user,
             amount=form.cleaned_data["amount"],
         )
     except AuctionClosed:
         form.add_error(None, "Esta subasta ya está cerrada y no admite más pujas.")
         return _render_auction_detail(request, _find_auction_or_404(auction_id), form)
     except NotABidder:
-        form.add_error("bidder", "Solo un pujador registrado puede pujar.")
+        form.add_error(None, "Tu cuenta no tiene el rol de comprador, así que no puede pujar.")
         return _render_auction_detail(request, auction, form)
     except SellerCannotBid:
-        form.add_error("bidder", "El vendedor no puede pujar en su propia subasta.")
+        form.add_error(None, "El vendedor no puede pujar en su propia subasta.")
         return _render_auction_detail(request, auction, form)
     except BidTooLow as error:
         form.add_error("amount", f"Tu puja debe superar el precio actual: $ {error.current_price:,.0f} COP.")
@@ -147,6 +150,7 @@ def _render_auction_detail(request, auction, form):
     )
 
 
+@login_required
 def auction_photographs(request, auction_id):
     """Show the photographs of an auction and receive new ones (FR02)."""
     try:

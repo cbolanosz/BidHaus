@@ -75,6 +75,9 @@ DATABASES = {
 
 AUTH_USER_MODEL = "accounts.User"
 
+# Where @login_required sends a visitor who is not logged in yet (FR31).
+LOGIN_URL = "accounts:log_in"
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},

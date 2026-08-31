@@ -148,6 +148,17 @@ img {
     color: var(--surface);
 }
 
+.who-am-i {
+    padding: 0.4rem 0.2rem;
+    color: var(--ink);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.sign-in-to-bid {
+    margin: 0;
+}
+
 .content {
     flex: 1;
     padding-block: 2.5rem 4.5rem;

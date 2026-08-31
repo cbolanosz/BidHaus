@@ -1,11 +1,14 @@
 """HTTP layer: parse the request, call a service, render a template."""
 
 from django.contrib import messages
+from django.contrib.auth import REDIRECT_FIELD_NAME, login
 from django.shortcuts import redirect, render
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 
-from accounts.exceptions import EmailAlreadyRegistered
-from accounts.forms import SignUpForm
-from accounts.services import register_visitor
+from accounts.exceptions import EmailAlreadyRegistered, InvalidCredentials
+from accounts.forms import LoginForm, SignUpForm
+from accounts.services import authenticate_user, register_visitor
 
 
 def sign_up(request):
@@ -29,3 +32,41 @@ def sign_up(request):
 
     messages.success(request, f"Se creó la cuenta de {user.full_name}.")
     return redirect("auctions:catalogue")
+
+
+def log_in(request):
+    """Show the login form and start the session it describes (FR31)."""
+    if request.method != "POST":
+        return render(request, "accounts/login.html", {"form": LoginForm()})
+
+    form = LoginForm(request.POST)
+    if not form.is_valid():
+        return render(request, "accounts/login.html", {"form": form})
+
+    try:
+        user = authenticate_user(
+            email=form.cleaned_data["email"],
+            password=form.cleaned_data["password"],
+        )
+    except InvalidCredentials:
+        form.add_error(None, "El correo o la contraseña no coinciden.")
+        return render(request, "accounts/login.html", {"form": form})
+
+    login(request, user)
+    messages.success(request, f"Hola, {user.full_name}.")
+    return redirect(_destination_after_login(request))
+
+
+def _destination_after_login(request):
+    """Return where to send the user, refusing an address outside this site.
+
+    Anyone can put a ?next= in the address bar, so a destination that points
+    at another host is discarded instead of followed.
+    """
+    destination = request.POST.get(REDIRECT_FIELD_NAME)
+    if destination and url_has_allowed_host_and_scheme(
+        destination, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return destination
+
+    return reverse("auctions:catalogue")
