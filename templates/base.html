@@ -11,19 +11,45 @@
 <body>
     <header class="masthead">
         <div class="shell masthead-inner">
-            <a class="wordmark" href="{% url 'auctions:catalogue' %}">
-                <img src="{% static 'img/logo-horizontal.svg' %}" alt="BidHaus" width="128" height="32">
-            </a>
-            <nav>
-                <a href="{% url 'auctions:catalogue' %}">Subastas</a>
-                {% if user.is_authenticated %}
-                    <span class="who-am-i">{{ user.full_name }}</span>
-                {% else %}
-                    <a href="{% url 'accounts:log_in' %}">Iniciar sesión</a>
-                    <a href="{% url 'accounts:sign_up' %}">Crear cuenta</a>
-                {% endif %}
+            <div class="masthead-brand">
+                <a class="wordmark" href="{% url 'auctions:catalogue' %}">
+                    <img src="{% static 'img/logo-horizontal.svg' %}" alt="BidHaus" width="128" height="32">
+                </a>
+                <nav class="masthead-nav" aria-label="Principal">
+                    <a class="nav-link" href="{% url 'auctions:catalogue' %}">Subastas</a>
+                </nav>
+            </div>
+
+            <div class="masthead-account">
                 <a class="button" href="{% url 'auctions:auction_create' %}">Publicar subasta</a>
-            </nav>
+
+                {% if user.is_authenticated %}
+                    <div class="capsule">
+                        <span class="capsule-cell capsule-identity">
+                            <span class="capsule-avatar" aria-hidden="true">{{ user.full_name|first|upper }}</span>
+                            <span class="capsule-name">{{ user.full_name }}</span>
+                        </span>
+                        <span class="capsule-rule" aria-hidden="true"></span>
+                        <form method="post" action="{% url 'accounts:log_out' %}" class="logout-form">
+                            {% csrf_token %}
+                            <button type="submit" class="capsule-cell capsule-exit" title="Cerrar sesión" aria-label="Cerrar sesión">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"></path>
+                                    <path d="M10 17l-5-5 5-5"></path>
+                                    <path d="M5 12h11"></path>
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                {% else %}
+                    <div class="capsule">
+                        <a class="capsule-cell" href="{% url 'accounts:log_in' %}">Iniciar sesión</a>
+                        <span class="capsule-rule" aria-hidden="true"></span>
+                        <a class="capsule-cell capsule-strong" href="{% url 'accounts:sign_up' %}">Crear cuenta</a>
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </header>
 

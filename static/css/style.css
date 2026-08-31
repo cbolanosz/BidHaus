@@ -118,6 +118,7 @@ img {
 
 .wordmark {
     display: inline-flex;
+    flex: 0 0 auto;
     align-items: center;
     text-decoration: none;
 }
@@ -127,32 +128,131 @@ img {
     height: 2rem;
 }
 
-.masthead nav {
+/* The header holds two clusters: where you can go, and who you are. */
+.masthead-brand,
+.masthead-account {
     display: flex;
-    gap: 0.5rem;
+    flex-wrap: wrap;
     align-items: center;
 }
 
-.masthead nav a {
-    padding: 0.4rem 0.2rem;
+.masthead-brand {
+    flex-wrap: nowrap;
+    gap: 1.75rem;
+}
+
+.masthead-account {
+    gap: 0.85rem;
+}
+
+.masthead-nav {
+    display: flex;
+    gap: 1.25rem;
+    align-items: center;
+}
+
+.nav-link {
+    padding: 0.35rem 0;
+    border: 0;
+    background: none;
     color: var(--ink-2);
+    font: inherit;
     font-size: 0.95rem;
     text-decoration: none;
+    transition: color 0.15s ease;
 }
 
-.masthead nav a:hover {
+.nav-link:hover {
     color: var(--ink);
 }
 
-.masthead nav a.button {
-    color: var(--surface);
+/* Whatever concerns your account lives inside one capsule, always the same
+   shape: only its contents change between having a session and not. Its
+   height matches .button so both read as one row. */
+.capsule {
+    display: flex;
+    align-items: stretch;
+    overflow: hidden;
+    min-height: 2.4rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
 }
 
-.who-am-i {
-    padding: 0.4rem 0.2rem;
+.capsule-cell {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0 0.875rem;
+    border: 0;
+    background: none;
+    color: var(--ink-2);
+    font: inherit;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.capsule-cell:hover {
     color: var(--ink);
-    font-size: 0.95rem;
+}
+
+.capsule-cell:focus-visible {
+    border-radius: 999px;
+}
+
+.capsule-strong {
+    color: var(--ink);
     font-weight: 600;
+}
+
+.capsule-identity {
+    padding-left: 0.3rem;
+    color: var(--ink);
+}
+
+.capsule-avatar {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background: var(--cobalt);
+    color: var(--surface);
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+/* A long full name is cut with an ellipsis so it never widens the header. */
+.capsule-name {
+    max-width: 13ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.capsule-rule {
+    align-self: center;
+    width: 1px;
+    height: 1.25rem;
+    background: var(--line);
+}
+
+.capsule-exit {
+    padding: 0 0.8rem;
+    cursor: pointer;
+}
+
+.capsule-exit svg {
+    width: 1.05rem;
+    height: 1.05rem;
+}
+
+.logout-form {
+    display: flex;
+    margin: 0;
 }
 
 .sign-in-to-bid {

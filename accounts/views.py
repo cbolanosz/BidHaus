@@ -1,10 +1,12 @@
 """HTTP layer: parse the request, call a service, render a template."""
 
 from django.contrib import messages
-from django.contrib.auth import REDIRECT_FIELD_NAME, login
+from django.contrib.auth import REDIRECT_FIELD_NAME, login, logout
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
 
 from accounts.exceptions import EmailAlreadyRegistered, InvalidCredentials
 from accounts.forms import LoginForm, SignUpForm
@@ -55,6 +57,20 @@ def log_in(request):
     login(request, user)
     messages.success(request, f"Hola, {user.full_name}.")
     return redirect(_destination_after_login(request))
+
+
+@require_POST
+@login_required
+def log_out(request):
+    """End the session of the user who is logged in (FR32).
+
+    Only POST is accepted. Behind a link, any other site could close the
+    session of a visitor with an image tag, and a browser that prefetches
+    links would close it by accident.
+    """
+    logout(request)
+    messages.success(request, "Cerraste la sesión.")
+    return redirect("auctions:catalogue")
 
 
 def _destination_after_login(request):
