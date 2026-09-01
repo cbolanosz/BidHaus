@@ -25,6 +25,10 @@
 
                 {% if user.is_authenticated %}
                     <div class="capsule">
+                        {% if not user.is_verified %}
+                            <a class="capsule-cell" href="{% url 'accounts:verification_request' %}">Verifica tu identidad</a>
+                            <span class="capsule-rule" aria-hidden="true"></span>
+                        {% endif %}
                         <span class="capsule-cell capsule-identity">
                             <span class="capsule-avatar" aria-hidden="true">{{ user.full_name|first|upper }}</span>
                             <span class="capsule-name">{{ user.full_name }}</span>

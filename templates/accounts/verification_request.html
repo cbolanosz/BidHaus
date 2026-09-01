@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Verifica tu identidad — BidHaus{% endblock %}
+
+{% block content %}
+<div class="section-head">
+    <h1>Verifica tu identidad</h1>
+    <p class="lede">Antes de publicar tu primera subasta, un administrador confirma quién eres. Es la garantía que sostiene el resto del sitio.</p>
+</div>
+
+{% if user.is_verified %}
+    <div class="panel">
+        <p class="verdict verdict-ok">Tu identidad ya está verificada.</p>
+    </div>
+{% elif pending_request %}
+    <div class="panel">
+        <p class="verdict">Tu solicitud del {{ pending_request.submitted_at|date:"d/m/Y H:i" }} está esperando respuesta.</p>
+        <p class="help">Te avisaremos en cuanto un administrador la revise. Mientras tanto no puedes enviar otra.</p>
+    </div>
+{% else %}
+    <div class="panel">
+        <form method="post" enctype="multipart/form-data" class="form" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <ul class="errors">
+                    {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+            {% endif %}
+
+            {% for field in form %}
+                <div class="field">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+                    {% if field.errors %}
+                        <ul class="errors">
+                            {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <div class="form-actions">
+                <button class="button" type="submit">Enviar documento</button>
+            </div>
+        </form>
+    </div>
+{% endif %}
+
+{% if requests %}
+    <section class="prose">
+        <h2>Tus solicitudes</h2>
+        <ul class="request-log">
+            {% for verification_request in requests %}
+                <li>
+                    <span class="request-state">{{ verification_request.get_state_display }}</span>
+                    <span class="request-date">{{ verification_request.submitted_at|date:"d/m/Y H:i" }}</span>
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
+{% endif %}
+{% endblock %}

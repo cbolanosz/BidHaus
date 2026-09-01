@@ -83,13 +83,13 @@ class AuctionCreateViewTests(TestCase):
         self.assertRedirects(response, f"{reverse('accounts:log_in')}?next={self.url}")
         self.assertEqual(Auction.objects.count(), 0)
 
-    def test_refuses_a_user_whose_role_is_not_seller(self):
+    def test_sends_a_user_who_is_not_a_seller_to_verify_their_identity(self):
         self.client.force_login(create_bidder())
 
         response = self.post()
 
         self.assertEqual(Auction.objects.count(), 0)
-        self.assertContains(response, "no tiene el rol de vendedor")
+        self.assertContains(response, "necesitas verificar tu identidad")
 
     def test_reports_an_invalid_closing_date_in_spanish(self):
         past_date = timezone.localtime(timezone.now() - timedelta(days=1))

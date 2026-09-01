@@ -255,6 +255,43 @@ img {
     margin: 0;
 }
 
+/* ---------- Identity verification ---------- */
+
+.verdict {
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.verdict-ok {
+    color: var(--success);
+}
+
+.request-log {
+    display: grid;
+    gap: 0;
+    margin: 1.25rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.request-log li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--line);
+}
+
+.request-state {
+    font-weight: 600;
+}
+
+.request-date {
+    color: var(--ink-2);
+    font-size: 0.9rem;
+}
+
 .sign-in-to-bid {
     margin: 0;
 }
@@ -799,6 +836,27 @@ input[type="file"]::file-selector-button {
 .facts dd {
     margin: 0;
     text-align: right;
+}
+
+/* The identity of the seller is one of the two promises of the site, so the
+ * badge is the only place in the catalogue that carries the success colour. */
+.badge-verified {
+    display: inline-flex;
+    gap: 0.28rem;
+    align-items: center;
+    margin-left: 0.35rem;
+    padding: 0.12rem 0.5rem 0.12rem 0.4rem;
+    border-radius: 999px;
+    background: rgba(10, 110, 60, 0.1);
+    color: var(--success);
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-verified svg {
+    width: 0.85rem;
+    height: 0.85rem;
 }
 
 .prose {

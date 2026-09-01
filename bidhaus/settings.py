@@ -96,6 +96,12 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Identity documents never live under MEDIA_ROOT: nothing must be able to serve
+# them by URL. Only an administrator reads them, through a view (DBR08).
+IDENTITY_DOCUMENT_ROOT = os.environ.get(
+    "BIDHAUS_IDENTITY_DOCUMENT_ROOT", BASE_DIR / "private-media"
+)
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Currency every amount in the database is expressed in.

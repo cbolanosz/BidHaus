@@ -76,7 +76,20 @@
         <dl class="facts">
             <dt>Estado</dt><dd>{{ auction.get_condition_display }}</dd>
             <dt>Precio inicial</dt><dd class="money">$ {{ auction.starting_price|floatformat:0|intcomma }}</dd>
-            <dt>Vendedor</dt><dd>{{ auction.seller.full_name }}</dd>
+            <dt>Vendedor</dt>
+            <dd>
+                {{ auction.seller.full_name }}
+                {% if auction.seller.is_verified %}
+                    <span class="badge-verified">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+                             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="9"></circle>
+                            <path d="M8 12.5l2.6 2.6L16 9.7"></path>
+                        </svg>
+                        Verificado
+                    </span>
+                {% endif %}
+            </dd>
             <dt>Cierre</dt><dd>{{ auction.closing_date|date:"d/m/Y H:i" }}</dd>
         </dl>
     </div>

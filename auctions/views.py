@@ -67,7 +67,11 @@ def auction_create(request):
             images=form.cleaned_data["images"],
         )
     except NotASeller:
-        form.add_error(None, "Tu cuenta no tiene el rol de vendedor, así que no puede publicar.")
+        form.add_error(
+            None,
+            "Para publicar necesitas verificar tu identidad antes. "
+            "Envía tu documento desde «Verifica tu identidad».",
+        )
         return render(request, "auctions/auction_form.html", {"form": form})
     except TooManyPhotographs:
         form.add_error("images", f"Una subasta admite {MAX_PHOTOGRAPHS} fotografías como máximo.")
