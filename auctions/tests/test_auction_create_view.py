@@ -91,6 +91,24 @@ class AuctionCreateViewTests(TestCase):
         self.assertEqual(Auction.objects.count(), 0)
         self.assertContains(response, "necesitas verificar tu identidad")
 
+    def test_tells_a_verified_account_that_it_is_the_wrong_one(self):
+        """An administrator is verified, so sending them to the form is a dead end."""
+        administrator = User.objects.create_user(
+            email="admin@bidhaus.co",
+            password="clave-de-prueba",
+            full_name="Admin de prueba",
+            role=User.Role.ADMINISTRATOR,
+            is_verified=True,
+        )
+        self.client.force_login(administrator)
+
+        response = self.post()
+
+        self.assertEqual(Auction.objects.count(), 0)
+        self.assertContains(response, "no es de vendedor")
+        self.assertContains(response, "admin@bidhaus.co")
+        self.assertNotContains(response, "necesitas verificar tu identidad")
+
     def test_reports_an_invalid_closing_date_in_spanish(self):
         past_date = timezone.localtime(timezone.now() - timedelta(days=1))
 

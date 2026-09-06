@@ -122,7 +122,12 @@ class BidForm(forms.Form):
 
 
 class PhotographUploadForm(forms.Form):
-    """Photographs a seller attaches to an auction that already exists (FR02)."""
+    """Photographs a seller attaches to an auction that already exists (FR02).
+
+    The auction is published by the time this form is shown, so an empty
+    submission is not a mistake: it is a seller who has nothing more to add.
+    The message says so instead of calling the field obligatory.
+    """
 
     images = MultipleImageField(
         label="Fotografías",
@@ -130,4 +135,10 @@ class PhotographUploadForm(forms.Form):
             f"Entre {MIN_PHOTOGRAPHS} y {MAX_PHOTOGRAPHS} imágenes, "
             f"de máximo {MAX_PHOTOGRAPH_SIZE_MB} MB cada una."
         ),
+        error_messages={
+            "required": (
+                "Elige al menos una fotografía para añadirla. "
+                "Si ya no quieres añadir más, pulsa «Terminar»: el lote ya está publicado."
+            )
+        },
     )

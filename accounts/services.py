@@ -2,12 +2,15 @@
 
 from django.contrib.auth import authenticate, get_user_model
 from django.db import transaction
+from django.utils import timezone
 
 from accounts.exceptions import (
     AlreadyVerified,
     EmailAlreadyRegistered,
     InvalidCredentials,
+    NotAnAdministrator,
     VerificationAlreadyPending,
+    VerificationAlreadyResolved,
 )
 from accounts.models import VerificationRequest
 
@@ -87,3 +90,52 @@ def list_verification_requests(seller):
 def find_verification_request(request_id):
     """Return that request, or raise VerificationRequest.DoesNotExist."""
     return VerificationRequest.objects.select_related("seller").get(pk=request_id)
+
+
+@transaction.atomic
+def approve_verification_request(verification_request, administrator):
+    """Trust the identity of a seller and let them publish (FR23).
+
+    Approving is what turns a bidder into a seller: the role and the badge are
+    granted here, in the same transaction as the decision, so an approved
+    request and an account that cannot publish never coexist.
+    """
+    seller = _resolve(
+        verification_request, administrator, VerificationRequest.State.APPROVED
+    )
+    seller.role = User.Role.SELLER
+    seller.is_verified = True
+    seller.save(update_fields=["role", "is_verified"])
+    return verification_request
+
+
+@transaction.atomic
+def reject_verification_request(verification_request, administrator):
+    """Refuse the identity a seller claimed (FR23).
+
+    The account is left exactly as it was, so a rejected seller keeps bidding
+    and may send a new document.
+    """
+    _resolve(verification_request, administrator, VerificationRequest.State.REJECTED)
+    return verification_request
+
+
+def _resolve(verification_request, administrator, state):
+    """Record who decided what and when, and destroy the document (DBR08).
+
+    The identity document is deleted as soon as the decision exists: it was
+    read to decide, and keeping it afterwards has no purpose that justifies
+    holding somebody's identity papers.
+    """
+    if administrator.role != User.Role.ADMINISTRATOR:
+        raise NotAnAdministrator
+    if not verification_request.is_pending:
+        raise VerificationAlreadyResolved
+
+    verification_request.state = state
+    verification_request.resolved_by = administrator
+    verification_request.resolved_at = timezone.now()
+    verification_request.save(update_fields=["state", "resolved_by", "resolved_at"])
+    verification_request.identity_document.delete(save=True)
+
+    return verification_request.seller

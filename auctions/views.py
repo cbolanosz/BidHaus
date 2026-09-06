@@ -67,11 +67,7 @@ def auction_create(request):
             images=form.cleaned_data["images"],
         )
     except NotASeller:
-        form.add_error(
-            None,
-            "Para publicar necesitas verificar tu identidad antes. "
-            "Envía tu documento desde «Verifica tu identidad».",
-        )
+        form.add_error(None, _why_this_account_cannot_publish(request.user))
         return render(request, "auctions/auction_form.html", {"form": form})
     except TooManyPhotographs:
         form.add_error("images", f"Una subasta admite {MAX_PHOTOGRAPHS} fotografías como máximo.")
@@ -82,6 +78,25 @@ def auction_create(request):
         f"Se publicó la subasta «{auction.title}». Puedes añadir más fotografías.",
     )
     return redirect("auctions:auction_photographs", auction_id=auction.pk)
+
+
+def _why_this_account_cannot_publish(user):
+    """Name the real obstacle: an unverified identity, or the wrong account.
+
+    An administrator and a bidder are both refused, and sending the first one
+    to the verification form would be a dead end: their identity is already
+    verified, so that form refuses them too.
+    """
+    if not user.is_verified:
+        return (
+            "Para publicar necesitas verificar tu identidad antes. "
+            "Envía tu documento desde «Verifica tu identidad»."
+        )
+
+    return (
+        f"Tu identidad está verificada, pero la cuenta «{user.email}» no es de vendedor. "
+        "Entra con tu cuenta de vendedor o pide a un administrador que cambie el rol."
+    )
 
 
 def auction_detail(request, auction_id):

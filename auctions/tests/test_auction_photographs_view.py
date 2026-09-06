@@ -41,11 +41,19 @@ class AuctionPhotographsViewTests(TestCase):
         self.assertRedirects(response, self.url)
         self.assertEqual(self.auction.photographs.count(), 2)
 
-    def test_requires_at_least_one_image(self):
+    def test_tells_a_seller_with_nothing_to_add_that_the_lot_is_already_published(self):
+        """Submitting with no file is not a mistake, so the message offers the way out."""
         response = self.client.post(self.url, {})
 
         self.assertEqual(Photograph.objects.count(), 0)
-        self.assertContains(response, "Este campo es obligatorio.")
+        self.assertContains(response, "Elige al menos una fotografía")
+        self.assertContains(response, "el lote ya está publicado")
+        self.assertNotContains(response, "Este campo es obligatorio.")
+
+    def test_offers_a_way_out_that_is_not_the_upload_button(self):
+        response = self.client.get(self.url)
+
+        self.assertContains(response, "Terminar y ver el lote")
 
     def test_reports_a_photograph_heavier_than_the_limit(self):
         response = self.client.post(self.url, {"images": [build_oversized_image()]})

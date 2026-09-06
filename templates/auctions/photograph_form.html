@@ -6,7 +6,10 @@
 <div class="lot-head">
     <span class="eyebrow">Lote {{ auction.pk|stringformat:"03d" }}</span>
     <h1>Fotografías de {{ auction.title }}</h1>
-    <p class="lede">{{ photographs|length }} de {{ max_photographs }} fotografías.</p>
+    <p class="lede">
+        El lote ya está publicado con {{ photographs|length }} de {{ max_photographs }} fotografías.
+        Añade más si quieres, o termina aquí.
+    </p>
     <ul class="meter" aria-hidden="true">
         {% for photograph in photographs %}<li class="filled"></li>{% endfor %}
         {% for slot in empty_slots %}<li></li>{% endfor %}
@@ -15,7 +18,7 @@
 
 <ol class="steps">
     <li>Paso 1 · Datos del artículo</li>
-    <li class="current">Paso 2 · Más fotografías</li>
+    <li class="current">Paso 2 · Más fotografías (opcional)</li>
 </ol>
 
 {% if form.images.errors %}
@@ -49,8 +52,8 @@
             </div>
 
             <div class="form-actions">
-                <button class="button" type="submit">Subir fotografías</button>
-                <a class="button button-quiet" href="{% url 'auctions:auction_detail' auction.pk %}">Ver el lote</a>
+                <button class="button" type="submit">Añadir fotografías</button>
+                <a class="button button-quiet" href="{% url 'auctions:auction_detail' auction.pk %}">Terminar y ver el lote</a>
             </div>
         </form>
     </div>
@@ -58,7 +61,7 @@
     <div class="empty">
         <p class="empty-title">Galería completa</p>
         <p>Esta subasta ya tiene el máximo de {{ max_photographs }} fotografías.</p>
-        <p><a href="{% url 'auctions:auction_detail' auction.pk %}">Ver el lote</a></p>
+        <p><a href="{% url 'auctions:auction_detail' auction.pk %}">Terminar y ver el lote</a></p>
     </div>
 {% endif %}
 {% endblock %}

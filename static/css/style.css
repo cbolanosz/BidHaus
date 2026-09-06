@@ -225,9 +225,10 @@ img {
     line-height: 1;
 }
 
-/* A long full name is cut with an ellipsis so it never widens the header. */
+/* A long full name is cut with an ellipsis so it never widens the header.
+   Two accounts can share a name, so the email is the hover title. */
 .capsule-name {
-    max-width: 13ch;
+    max-width: 14ch;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1014,9 +1015,11 @@ input[type="file"]::file-selector-button {
         padding: 0 1.1rem;
     }
 
-    .masthead nav {
-        width: 100%;
-        justify-content: space-between;
+    /* On a phone the avatar identifies the account on its own, so the header
+       stays two rows instead of four. */
+    .capsule-name,
+    .capsule-rule {
+        display: none;
     }
 
     .facts dd {

@@ -31,7 +31,7 @@
                         {% endif %}
                         <span class="capsule-cell capsule-identity">
                             <span class="capsule-avatar" aria-hidden="true">{{ user.full_name|first|upper }}</span>
-                            <span class="capsule-name">{{ user.full_name }}</span>
+                            <span class="capsule-name" title="{{ user.email }}">{{ user.full_name }}</span>
                         </span>
                         <span class="capsule-rule" aria-hidden="true"></span>
                         <form method="post" action="{% url 'accounts:log_out' %}" class="logout-form">

@@ -19,3 +19,11 @@ class VerificationAlreadyPending(AccountError):
 
 class AlreadyVerified(AccountError):
     """The identity of this seller has already been verified."""
+
+
+class NotAnAdministrator(AccountError):
+    """Only an administrator decides on a verification request (DBR08)."""
+
+
+class VerificationAlreadyResolved(AccountError):
+    """The request already carries a decision and is not decided twice."""
