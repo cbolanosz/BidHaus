@@ -147,6 +147,10 @@ Service    services.py           use case: transactions, orchestration, business
 Model      models.py             entities, fields, relationships, queries
 ```
 
+`notifications.py` is a collaborator the services call, not a fifth layer: it turns a fact
+the service has just recorded into an email, and it renders the body from a template like
+every other piece of text a user reads.
+
 `services.py` is not a fifth element of MVT — it is how the View layer is kept thin.
 A view never contains business logic and never builds a queryset by hand.
 
@@ -282,6 +286,78 @@ changes between machines can still be overridden with an environment variable:
 | `BIDHAUS_DATABASE_PATH` | `db.sqlite3` in the project root | Location of the SQLite file |
 | `BIDHAUS_TIME_ZONE` | `America/Bogota` | Time zone used for closing dates |
 | `BIDHAUS_CURRENCY` | `COP` | Currency every stored amount is expressed in |
+| `BIDHAUS_SITE_URL` | `http://127.0.0.1:8000` | Address the links inside an email point at |
+| `BIDHAUS_EMAIL_BACKEND` | console backend | How email is delivered. See *Notifications* below |
+| `BIDHAUS_DEFAULT_FROM_EMAIL` | `BidHaus <no-responder@bidhaus.co>` | Address the notifications are sent from |
+| `BIDHAUS_EMAIL_HOST` | `localhost` | SMTP server, when the SMTP backend is used |
+| `BIDHAUS_EMAIL_PORT` | `25` | Port of the SMTP server |
+| `BIDHAUS_EMAIL_HOST_USER` | empty | SMTP user |
+| `BIDHAUS_EMAIL_HOST_PASSWORD` | empty | SMTP password |
+| `BIDHAUS_EMAIL_USE_TLS` | `false` | Whether to open the SMTP connection with TLS |
+| `BIDHAUS_EMAIL_TIMEOUT` | `10` | Seconds to wait for the SMTP server before giving up |
+
+---
+
+## Closing Auctions and Notifications
+
+Django has no scheduler of its own, so nothing happens on a clock unless something runs the
+`close_auctions` command. Closing an auction is what marks its winning bid and what sends
+the two result notifications, so the same command covers FR07 to FR10:
+
+```bash
+python manage.py close_auctions
+```
+
+Running it twice in a row is harmless: the second run finds nothing to close and sends
+nothing. In production it is run by cron. Running it **every 30 seconds** keeps both
+deadlines with room to spare — the 30 seconds FR07 allows for the closing, and the 2 minutes
+FR09 and FR10 allow for the result reaching the winner and the seller:
+
+```cron
+* * * * * cd /srv/bidhaus && .venv/bin/python manage.py close_auctions
+* * * * * sleep 30; cd /srv/bidhaus && .venv/bin/python manage.py close_auctions
+```
+
+Between two runs of the command, an auction that is already past its closing date is also
+closed the moment somebody opens its page, so a visitor never sees a countdown on an auction
+that is over. That path sends the notifications too.
+
+The outbid notification of FR11 needs no scheduler at all: it goes out as part of
+registering the bid that displaced the previous one.
+
+### Where the emails go
+
+Every message is queued with `transaction.on_commit`, so nothing is ever announced that the
+database rolled back a moment later, and a mail server that cannot be reached is written to
+the log instead of undoing the bid or the closing that caused the message.
+
+By default the project uses Django's **console backend**: no mail server is needed and every
+notification is printed, whole, in the terminal running `runserver` or `close_auctions`. That
+is what makes the three requirements visible during a demonstration. To send them for real,
+point the backend at an SMTP server:
+
+```bash
+export BIDHAUS_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+export BIDHAUS_EMAIL_HOST=smtp.example.com
+export BIDHAUS_EMAIL_PORT=587
+export BIDHAUS_EMAIL_USE_TLS=true
+export BIDHAUS_EMAIL_HOST_USER=notificaciones@example.com
+export BIDHAUS_EMAIL_HOST_PASSWORD=…
+export BIDHAUS_SITE_URL=https://bidhaus.example.com
+```
+
+`BIDHAUS_SITE_URL` matters: an email is read outside the browser that opened the site, so
+the link it carries has to be absolute.
+
+| Email | Sent when | To |
+|---|---|---|
+| *Ganaste la subasta «…»* | The auction closes with a winning bid | The winning bidder (FR09) |
+| *Cerró tu subasta «…»* | The auction closes, with or without bids | The seller (FR10) |
+| *Superaron tu puja en «…»* | A bid displaces the highest one | The bidder who held it (FR11) |
+
+A bidder who raises their own highest bid outbids nobody but themselves, so no message is
+sent. Only the bidder who actually held the lead is written to: everybody else further down
+the history was already told when it was their turn to be passed.
 
 ---
 
@@ -335,6 +411,13 @@ python manage.py check
 python manage.py shell
 ```
 
+### Close the Auctions Whose Date Has Passed
+```bash
+python manage.py close_auctions
+```
+This also marks the winning bid and sends the result notifications. See
+*Closing Auctions and Notifications* above.
+
 ---
 
 ## Common Troubleshooting
@@ -360,6 +443,22 @@ python manage.py shell
 ### The bid form has an empty "Pujador" dropdown
 - **Cause:** No user has the role *Comprador*. Only a registered bidder may bid.
 - **Solution:** Create one from the admin panel.
+
+### An auction is past its closing date but still says "Abierta" in the catalogue
+- **Cause:** Nothing has run `close_auctions` since the date passed. The catalogue reads the
+  stored state; it does not close anything by itself.
+- **Solution:** Run `python manage.py close_auctions`, or open the auction's own page, which
+  closes it on the spot. In production, let cron run the command.
+
+### No notification arrives
+- **Cause:** The default backend prints the emails instead of sending them.
+- **Solution:** Look at the terminal running `runserver` or `close_auctions`: the whole
+  message is printed there. To send them for real, set `BIDHAUS_EMAIL_BACKEND` and the SMTP
+  variables listed under *Configuration*.
+
+### The link inside a notification points at 127.0.0.1
+- **Cause:** `BIDHAUS_SITE_URL` still holds its development default.
+- **Solution:** Set it to the address the site actually answers at.
 
 ### Error uploading photographs
 - **Solution:** Make sure Pillow is installed correctly: `pip install Pillow`.
