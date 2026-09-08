@@ -1,4 +1,4 @@
-"""The emails BidHaus sends when an auction closes (FR09, FR10).
+"""The emails BidHaus sends when an auction changes for somebody (FR09-FR11).
 
 Sending is scheduled with transaction.on_commit, so no message ever announces a
 result that the database rolled back a moment later. A mailbox that cannot be
@@ -19,9 +19,11 @@ logger = logging.getLogger(__name__)
 
 WON_SUBJECT = "Ganaste la subasta «{title}»"
 SELLER_RESULT_SUBJECT = "Cerró tu subasta «{title}»"
+OUTBID_SUBJECT = "Superaron tu puja en «{title}»"
 
 WON_TEMPLATE = "auctions/email/auction_won.txt"
 SELLER_RESULT_TEMPLATE = "auctions/email/auction_result_seller.txt"
+OUTBID_TEMPLATE = "auctions/email/outbid.txt"
 
 
 def notify_auction_result(auction):
@@ -51,6 +53,24 @@ def notify_auction_result(auction):
         template=SELLER_RESULT_TEMPLATE,
         context=context,
         recipient=auction.seller.email,
+    )
+
+
+def notify_outbid_bidder(auction, outbid_bid):
+    """Tell the bidder who held the highest bid that somebody passed them (FR11).
+
+    Only that one bidder is written to. Everybody else in the history was
+    already outbid, and was told so when it happened.
+    """
+    _schedule(
+        subject=OUTBID_SUBJECT.format(title=auction.title),
+        template=OUTBID_TEMPLATE,
+        context={
+            "auction": auction,
+            "outbid_bid": outbid_bid,
+            "auction_url": _auction_url(auction),
+        },
+        recipient=outbid_bid.bidder.email,
     )
 
 

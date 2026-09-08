@@ -18,7 +18,7 @@ from auctions.exceptions import (
     TooManyPhotographs,
 )
 from auctions.models import MAX_PHOTOGRAPHS, Auction, Bid, Photograph
-from auctions.notifications import notify_auction_result
+from auctions.notifications import notify_auction_result, notify_outbid_bidder
 
 User = get_user_model()
 
@@ -176,12 +176,22 @@ def _register_bid(auction_id, bidder, amount):
     if amount <= auction.current_price:
         raise BidTooLow(auction.current_price)
 
+    # Read while the new row does not exist yet, so this is the bid the new one
+    # is about to displace and not the new one itself (FR11).
+    displaced_bid = auction.bids.first()
+
     bid = Bid(auction=auction, bidder=bidder, amount=amount)
     bid.full_clean()
     bid.save()
 
     auction.current_price = amount
     auction.save(update_fields=["current_price"])
+
+    # A bidder who raises their own highest bid outbid nobody but themselves,
+    # and telling them so would be noise (FR11).
+    if displaced_bid is not None and displaced_bid.bidder_id != bidder.id:
+        notify_outbid_bidder(auction, displaced_bid)
+
     return bid
 
 

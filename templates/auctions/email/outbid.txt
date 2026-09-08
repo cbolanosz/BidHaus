@@ -1,0 +1,15 @@
+{% load humanize %}Hola {{ outbid_bid.bidder.full_name }}:
+
+Superaron tu puja en esta subasta:
+
+  «{{ auction.title }}»
+
+  Tu puja: $ {{ outbid_bid.amount|floatformat:0|intcomma }} COP
+  Precio actual: $ {{ auction.current_price|floatformat:0|intcomma }} COP
+  Cierra el: {{ auction.closing_date|date:"d/m/Y H:i" }}
+
+Todavía estás a tiempo de volver a pujar:
+{{ auction_url }}
+
+— BidHaus
+Este es un mensaje automático; no respondas a este correo.
