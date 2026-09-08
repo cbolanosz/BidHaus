@@ -70,44 +70,50 @@ by the migrations.
 
 ```
 BidHaus
-├─ accounts                              User model, roles and the admin that seeds them
+├─ accounts                              Accounts, roles and identity verification
 │  ├─ migrations
 │  │  ├─ 0001_initial.py
+│  │  ├─ 0002_verificationrequest.py
 │  │  └─ __init__.py
+│  ├─ tests
+│  │  └─ …                               One module per requirement
 │  ├─ __init__.py
-│  ├─ admin.py
+│  ├─ admin.py                           Where an administrator resolves a request
 │  ├─ apps.py
+│  ├─ exceptions.py
+│  ├─ forms.py
 │  ├─ managers.py
-│  └─ models.py
+│  ├─ models.py                          User and VerificationRequest
+│  ├─ services.py                        Sign up, log in, submit and resolve a request
+│  ├─ urls.py
+│  ├─ validators.py
+│  └─ views.py
 ├─ auctions                              Categories, auctions, photographs and bids
+│  ├─ management
+│  │  └─ commands
+│  │     └─ close_auctions.py            Run by cron; closes and notifies (FR07-FR10)
 │  ├─ migrations
 │  │  ├─ 0001_initial.py
 │  │  ├─ 0002_photograph.py
 │  │  ├─ 0003_bid.py
+│  │  ├─ 0004_auction_winning_bid.py
 │  │  └─ __init__.py
 │  ├─ templatetags
 │  │  ├─ __init__.py
 │  │  └─ auction_formats.py
 │  ├─ tests
 │  │  ├─ __init__.py
-│  │  ├─ factories.py
-│  │  ├─ test_add_photographs.py
-│  │  ├─ test_auction_bid_view.py
-│  │  ├─ test_auction_catalogue_view.py
-│  │  ├─ test_auction_create_view.py
-│  │  ├─ test_auction_detail_view.py
-│  │  ├─ test_auction_photographs_view.py
-│  │  ├─ test_bid_history.py
-│  │  ├─ test_place_bid.py
-│  │  ├─ test_publish_auction.py
-│  │  └─ test_search_auctions.py
+│  │  ├─ factories.py                    Objects a test needs
+│  │  ├─ mailbox.py                      Reading the emails a use case sent
+│  │  └─ …                               One module per requirement
 │  ├─ __init__.py
 │  ├─ admin.py
 │  ├─ apps.py
 │  ├─ exceptions.py                      Errors raised when a business rule is not met
 │  ├─ forms.py                           Request validation
 │  ├─ models.py                          Entities, fields and queries
-│  ├─ services.py                        Use cases: publish, upload, search, bid
+│  ├─ notifications.py                   The emails an auction sends (FR09-FR11)
+│  ├─ services.py                        Use cases: publish, upload, search, bid, close
 │  ├─ urls.py
 │  ├─ validators.py
 │  └─ views.py                           Parses the request, calls a service, renders
@@ -127,7 +133,15 @@ BidHaus
 │     ├─ logo-horizontal-mono.svg
 │     └─ logo-horizontal.svg
 ├─ templates
+│  ├─ accounts
+│  │  ├─ login.html
+│  │  ├─ signup.html
+│  │  └─ verification_request.html
 │  ├─ auctions
+│  │  ├─ email                           The body of every notification
+│  │  │  ├─ auction_result_seller.txt
+│  │  │  ├─ auction_won.txt
+│  │  │  └─ outbid.txt
 │  │  ├─ auction_detail.html
 │  │  ├─ auction_form.html
 │  │  ├─ catalogue.html
@@ -217,16 +231,22 @@ You'll be asked for:
 - Full name
 - Password (you type it but it won't show on screen)
 
-### Step 6: Seed the Data the Catalogue Needs
+### Step 6: Seed the Categories
 
-**There is no sign-up screen yet** — accounts are created from the Django admin during this
-sprint. Start the server, open http://127.0.0.1:8000/admin/ and create:
+Anyone can now create their own account from `/accounts/signup/`, so only the categories
+still have to be seeded by hand. Start the server, open http://127.0.0.1:8000/admin/ and
+create **at least one Category** (for example *Fotografía*, *Audio*, *Relojes*). Without
+one, the publication form has an empty dropdown.
 
-1. **At least one Category** (for example *Fotografía*, *Audio*, *Relojes*).
-2. **At least one user with the role Vendedor** — only a seller may publish an auction.
-3. **At least one user with the role Comprador** — only a bidder may place a bid.
+A new account starts with the role *Comprador*, which is enough to bid. Publishing needs
+the role *Vendedor*, and that is what an approved identity verification grants (FR21, FR23):
 
-Without these, the publication form and the bid form will have empty dropdowns.
+1. Log in and send an identity document from **«Verifica tu identidad»**.
+2. Open the admin as an administrator, go to **Solicitudes de verificación**, select the
+   request and run the action **Aprobar**.
+
+The account that approves must itself have the role *Administrador*. Give your superuser
+that role from **Usuarios** in the admin the first time.
 
 ### Step 7: Run the Development Server
 
@@ -257,7 +277,12 @@ Quit the server with CONTROL-C.
 | `/auctions/<id>/` | Auction detail: photographs, current price, countdown, bid form and full bid history | FR04 |
 | `/auctions/<id>/bid/` | Registers a bid submitted from the detail page | FR05, FR06 |
 | `/auctions/<id>/photographs/` | Adds photographs to an auction, up to 8 | FR02 |
-| `/admin/` | Django admin, used to seed users and categories | — |
+| `/accounts/signup/` | Creates an account from an email, a name and a password | FR30 |
+| `/accounts/login/` | Starts a session | FR31 |
+| `/accounts/logout/` | Ends the session. POST only | FR32 |
+| `/accounts/verification/` | Sends an identity document and lists what was answered | FR21 |
+| `/accounts/verification/<id>/document/` | Serves a document to an administrator only | DBR08 |
+| `/admin/` | Django admin: categories, roles, and the verification decisions | FR23 |
 
 ---
 
@@ -286,6 +311,7 @@ changes between machines can still be overridden with an environment variable:
 | `BIDHAUS_DATABASE_PATH` | `db.sqlite3` in the project root | Location of the SQLite file |
 | `BIDHAUS_TIME_ZONE` | `America/Bogota` | Time zone used for closing dates |
 | `BIDHAUS_CURRENCY` | `COP` | Currency every stored amount is expressed in |
+| `BIDHAUS_IDENTITY_DOCUMENT_ROOT` | `private-media/` | Where identity documents are kept, outside `MEDIA_ROOT` |
 | `BIDHAUS_SITE_URL` | `http://127.0.0.1:8000` | Address the links inside an email point at |
 | `BIDHAUS_EMAIL_BACKEND` | console backend | How email is delivered. See *Notifications* below |
 | `BIDHAUS_DEFAULT_FROM_EMAIL` | `BidHaus <no-responder@bidhaus.co>` | Address the notifications are sent from |
@@ -435,14 +461,10 @@ This also marks the winning bid and sends the result notifications. See
   - Close the other process using the port
   - Use another port: `python manage.py runserver 8001`
 
-### The publication form has an empty "Vendedor" dropdown
-- **Cause:** No user has the role *Vendedor*. Only a registered seller may publish.
-- **Solution:** Create one at http://127.0.0.1:8000/admin/ under **Usuarios**, or change the
-  role of an existing user.
-
-### The bid form has an empty "Pujador" dropdown
-- **Cause:** No user has the role *Comprador*. Only a registered bidder may bid.
-- **Solution:** Create one from the admin panel.
+### "Para publicar necesitas verificar tu identidad antes"
+- **Cause:** The account has not been verified, and only a verified seller may publish.
+- **Solution:** Send an identity document from **«Verifica tu identidad»** and approve the
+  request from the admin, as described in Step 6.
 
 ### An auction is past its closing date but still says "Abierta" in the catalogue
 - **Cause:** Nothing has run `close_auctions` since the date passed. The catalogue reads the
