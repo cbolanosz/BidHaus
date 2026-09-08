@@ -1,0 +1,17 @@
+{% load humanize %}Hola {{ winning_bid.bidder.full_name }}:
+
+Ganaste esta subasta:
+
+  «{{ auction.title }}»
+
+  Tu puja ganadora: $ {{ winning_bid.amount|floatformat:0|intcomma }} COP
+  Cerró el: {{ auction.closing_date|date:"d/m/Y H:i" }}
+  Vendedor: {{ auction.seller.full_name }} <{{ auction.seller.email }}>
+
+Puedes ver el detalle de la subasta aquí:
+{{ auction_url }}
+
+El vendedor se comunicará contigo para coordinar el pago y la entrega.
+
+— BidHaus
+Este es un mensaje automático; no respondas a este correo.

@@ -18,6 +18,7 @@ from auctions.exceptions import (
     TooManyPhotographs,
 )
 from auctions.models import MAX_PHOTOGRAPHS, Auction, Bid, Photograph
+from auctions.notifications import notify_auction_result
 
 User = get_user_model()
 
@@ -116,6 +117,10 @@ def close_auction(auction):
     The bids are ordered by descending amount and then by time, so the first one
     is the highest and, on a tie, the one that arrived first. An auction that
     nobody bid on closes with no winning bid.
+
+    Closing is also what tells the winner that they won (FR09). The early
+    return above is what keeps that message from being sent twice: an auction
+    that is already closed is left alone.
     """
     if not auction.is_open:
         return auction
@@ -123,6 +128,7 @@ def close_auction(auction):
     auction.state = Auction.State.CLOSED
     auction.winning_bid = auction.bids.first()
     auction.save(update_fields=["state", "winning_bid"])
+    notify_auction_result(auction)
     return auction
 
 
