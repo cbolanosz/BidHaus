@@ -1,4 +1,4 @@
-"""The email BidHaus sends to the winner of an auction that closes (FR09).
+"""The emails BidHaus sends when an auction closes (FR09, FR10).
 
 Sending is scheduled with transaction.on_commit, so no message ever announces a
 result that the database rolled back a moment later. A mailbox that cannot be
@@ -18,28 +18,39 @@ from django.urls import reverse
 logger = logging.getLogger(__name__)
 
 WON_SUBJECT = "Ganaste la subasta «{title}»"
+SELLER_RESULT_SUBJECT = "Cerró tu subasta «{title}»"
 
 WON_TEMPLATE = "auctions/email/auction_won.txt"
+SELLER_RESULT_TEMPLATE = "auctions/email/auction_result_seller.txt"
 
 
 def notify_auction_result(auction):
-    """Tell the winner of a closed auction that they won it (FR09).
+    """Tell the winner and the seller how the auction ended (FR09, FR10).
 
-    An auction nobody bid on has no winner to write to, so it sends nothing.
+    Both messages are queued in the same call because both describe the same
+    fact, the auction closing. An auction nobody bid on has no winner to write
+    to, so only the seller hears about it.
     """
     winning_bid = auction.winning_bid
-    if winning_bid is None:
-        return
+    context = {
+        "auction": auction,
+        "winning_bid": winning_bid,
+        "auction_url": _auction_url(auction),
+    }
+
+    if winning_bid is not None:
+        _schedule(
+            subject=WON_SUBJECT.format(title=auction.title),
+            template=WON_TEMPLATE,
+            context=context,
+            recipient=winning_bid.bidder.email,
+        )
 
     _schedule(
-        subject=WON_SUBJECT.format(title=auction.title),
-        template=WON_TEMPLATE,
-        context={
-            "auction": auction,
-            "winning_bid": winning_bid,
-            "auction_url": _auction_url(auction),
-        },
-        recipient=winning_bid.bidder.email,
+        subject=SELLER_RESULT_SUBJECT.format(title=auction.title),
+        template=SELLER_RESULT_TEMPLATE,
+        context=context,
+        recipient=auction.seller.email,
     )
 
 

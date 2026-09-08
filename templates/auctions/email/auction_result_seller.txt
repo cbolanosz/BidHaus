@@ -1,0 +1,21 @@
+{% load humanize %}Hola {{ auction.seller.full_name }}:
+
+Cerró tu subasta:
+
+  «{{ auction.title }}»
+
+  Cerró el: {{ auction.closing_date|date:"d/m/Y H:i" }}
+{% if winning_bid %}  Puja ganadora: $ {{ winning_bid.amount|floatformat:0|intcomma }} COP
+  Comprador: {{ winning_bid.bidder.full_name }} <{{ winning_bid.bidder.email }}>
+
+Escríbele para coordinar el pago y la entrega.
+{% else %}  Resultado: cerró sin pujas, así que no hay comprador.
+
+Puedes volver a publicarla con otro precio inicial o con otra fecha
+de cierre.
+{% endif %}
+Puedes ver el detalle de la subasta aquí:
+{{ auction_url }}
+
+— BidHaus
+Este es un mensaje automático; no respondas a este correo.

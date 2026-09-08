@@ -118,9 +118,9 @@ def close_auction(auction):
     is the highest and, on a tie, the one that arrived first. An auction that
     nobody bid on closes with no winning bid.
 
-    Closing is also what tells the winner that they won (FR09). The early
-    return above is what keeps that message from being sent twice: an auction
-    that is already closed is left alone.
+    Closing is also what announces the result to the winner and to the seller
+    (FR09, FR10). The early return above is what keeps that announcement from
+    being sent twice: an auction that is already closed is left alone.
     """
     if not auction.is_open:
         return auction
