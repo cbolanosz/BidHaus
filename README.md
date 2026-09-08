@@ -387,25 +387,40 @@ the history was already told when it was their turn to be passed.
 
 ---
 
-## Current Scope — Sprint 1
+## Current Scope — Sprint 2
 
-| ID | Requirement | State |
-|---|---|---|
-| FR01 | A registered seller publishes an auction with title, description, condition, category, starting price and closing date | Done |
-| FR02 | The seller uploads between 1 and 8 photographs of at most 5 MB each | Done |
-| FR03 | A user searches auctions by category, price range and condition | Done |
-| FR04 | The auction detail displays the complete bid history, highest first | Done |
-| FR05 | A registered bidder places a bid higher than the current price | Done |
-| FR06 | The current price of the auction is updated after a bid is registered | Done |
-| FR07 | An auction closes as soon as its closing date is reached | In progress |
-| FR08 | The highest bid is marked as the winning bid after an auction closes | In progress |
+Sprint 1 delivered the catalogue and the bidding; sprint 2 closes an auction on its own,
+tells the people it concerns, and puts a verified identity behind every seller.
+
+| ID | Requirement | Sprint | State |
+|---|---|---|---|
+| FR01 | A registered seller publishes an auction with title, description, condition, category, starting price and closing date | 1 | Done |
+| FR02 | The seller uploads between 1 and 8 photographs of at most 5 MB each | 1 | Done |
+| FR03 | A user searches auctions by category, price range and condition | 1 | Done |
+| FR04 | The auction detail displays the complete bid history, highest first | 1 | Done |
+| FR05 | A registered bidder places a bid higher than the current price | 1 | Done |
+| FR06 | The current price of the auction is updated after a bid is registered | 1 | Done |
+| FR07 | An auction closes as soon as its closing date is reached | 2 | Done |
+| FR08 | The highest bid is marked as the winning bid after an auction closes | 2 | Done |
+| FR09 | The winning bidder is notified of the result after an auction closes | 2 | Done |
+| FR10 | The seller is notified of the result after an auction closes | 2 | Done |
+| FR11 | A bidder is notified when their bid is outbid | 2 | Done |
+| FR21 | A user submits identity documents to be verified as a seller | 2 | Done |
+| FR22 | The verified-seller badge is displayed next to the seller | 2 | Done |
+| FR23 | An administrator approves or rejects an identity-verification request | 2 | Done |
+| FR30 | A visitor signs up for an account | 2 | Done |
+| FR31 | A registered user logs in | 2 | Done |
+| FR32 | A logged-in user logs out | 2 | Done |
 
 Known limitations of this sprint:
 
-- There is no sign-up or login yet, so the seller and the bidder are chosen from a dropdown
-  in the form. Those fields disappear once authentication is implemented (FR30, FR31).
+- Notifications are sent synchronously, in the same process that closed the auction or
+  registered the bid. That is what a project of this size needs; a real deployment would
+  hand them to a queue so that a slow mail server never delays a bid.
 - The seller-rating filter of FR03 is not implemented, because ratings depend on completed
   escrow transactions, which belong to a later sprint (FR24).
+- Escrow itself is not implemented yet, so the result email tells the winner that the seller
+  will contact them, and no payment is held anywhere.
 - Payments are simulated. This is an academic project and never integrates a payment gateway
   nor stores card or bank data.
 
@@ -502,4 +517,4 @@ This also marks the winning bid and sends the result notifications. See
 
 ---
 
-**Last updated:** August 2026
+**Last updated:** September 2026
