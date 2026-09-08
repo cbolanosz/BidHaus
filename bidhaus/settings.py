@@ -102,6 +102,27 @@ IDENTITY_DOCUMENT_ROOT = os.environ.get(
     "BIDHAUS_IDENTITY_DOCUMENT_ROOT", BASE_DIR / "private-media"
 )
 
+# The mail service BidHaus hands its notifications to (FR09, FR10, FR11).
+# The console backend is the default so the project runs with no mail server:
+# every message is printed to the terminal running the server. Point
+# BIDHAUS_EMAIL_BACKEND at the SMTP backend to send them for real.
+EMAIL_BACKEND = os.environ.get(
+    "BIDHAUS_EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+)
+EMAIL_HOST = os.environ.get("BIDHAUS_EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.environ.get("BIDHAUS_EMAIL_PORT", "25"))
+EMAIL_HOST_USER = os.environ.get("BIDHAUS_EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("BIDHAUS_EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.environ.get("BIDHAUS_EMAIL_USE_TLS", "false").lower() == "true"
+EMAIL_TIMEOUT = int(os.environ.get("BIDHAUS_EMAIL_TIMEOUT", "10"))
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "BIDHAUS_DEFAULT_FROM_EMAIL", "BidHaus <no-responder@bidhaus.co>"
+)
+
+# Where this installation answers from. An email is read outside the browser
+# that opened the site, so the links it carries have to be absolute.
+SITE_URL = os.environ.get("BIDHAUS_SITE_URL", "http://127.0.0.1:8000")
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Currency every amount in the database is expressed in.
