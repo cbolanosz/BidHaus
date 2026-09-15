@@ -24,7 +24,7 @@ no CDN. The only third-party dependencies are Django and Pillow.
 ## Environment
 
 The project is developed on more than one machine. It runs the same on all of them, because
-the only requirements are Python and the two packages in `requirements.txt`.
+the only requirements are Python and the three packages in `requirements.txt`.
 
 **Machine 1 — Cristian**
 
@@ -42,7 +42,7 @@ the only requirements are Python and the two packages in `requirements.txt`.
 - **Terminal:** _(fill in)_
 - **Python:** _(fill in)_
 
-**Shared across every machine:** Django 6.0.7 · Pillow 12.3.0 · SQLite (bundled with Python)
+**Shared across every machine:** Django 6.0 · Pillow 12.3 · python-dotenv 1.1 · SQLite (bundled with Python)
 
 ---
 
@@ -147,6 +147,7 @@ BidHaus
 │  │  ├─ catalogue.html
 │  │  └─ photograph_form.html
 │  └─ base.html
+├─ .env.example                          Every key the .env expects, with no secrets
 ├─ .gitignore
 ├─ manage.py
 └─ requirements.txt
@@ -206,10 +207,36 @@ pip install -r requirements.txt
 
 This will install:
 
-- Django 6.0.7
-- Pillow 12.3.0 — required by Django's `ImageField` to handle the auction photographs
+- Django 6.0
+- Pillow 12.3 — required by Django's `ImageField` to handle the auction photographs
+- python-dotenv 1.1 — reads the `.env` where the mail credentials live
 
-### Step 4: Apply the Migrations
+### Step 4: Create the `.env`
+
+BidHaus sends its notifications for real, so it needs the credentials of a mailbox.
+They never live in the repository: `.env` is ignored by Git, and `.env.example` lists
+every key with a comment.
+
+```bash
+cp .env.example .env        # macOS and Linux
+copy .env.example .env      # Windows
+```
+
+Open it and fill in the only two values that are required:
+
+```ini
+BIDHAUS_EMAIL_HOST_USER=tucorreo@gmail.com
+BIDHAUS_EMAIL_HOST_PASSWORD=abcdefghijklmnop
+```
+
+With Gmail that password is **not** the one you type to log in: it is a 16-character
+*app password*, and the account needs two-step verification enabled before Google will
+generate one. Create it at https://myaccount.google.com/apppasswords.
+
+A real environment variable always wins over the file, so a server can set one without
+editing anything.
+
+### Step 5: Apply the Migrations
 
 This creates `db.sqlite3` with every table the project needs:
 
@@ -217,7 +244,7 @@ This creates `db.sqlite3` with every table the project needs:
 python manage.py migrate
 ```
 
-### Step 5: Create a Superuser
+### Step 6: Create a Superuser
 
 The admin panel is how users and categories are created, so this step is required, not
 optional:
@@ -231,7 +258,7 @@ You'll be asked for:
 - Full name
 - Password (you type it but it won't show on screen)
 
-### Step 6: Seed the Categories
+### Step 7: Seed the Categories
 
 Anyone can now create their own account from `/accounts/signup/`, so only the categories
 still have to be seeded by hand. Start the server, open http://127.0.0.1:8000/admin/ and
@@ -248,7 +275,7 @@ the role *Vendedor*, and that is what an approved identity verification grants (
 The account that approves must itself have the role *Administrador*. Give your superuser
 that role from **Usuarios** in the admin the first time.
 
-### Step 7: Run the Development Server
+### Step 8: Run the Development Server
 
 ```bash
 python manage.py runserver
@@ -261,7 +288,7 @@ Starting development server at http://127.0.0.1:8000/
 Quit the server with CONTROL-C.
 ```
 
-### Step 8: Open the Application
+### Step 9: Open the Application
 
 - **Main application:** http://127.0.0.1:8000/ or http://localhost:8000/
 - **Admin panel:** http://127.0.0.1:8000/admin/ (use the superuser credentials)
@@ -300,8 +327,9 @@ python manage.py test auctions.tests.test_place_bid
 
 ## Configuration
 
-The project runs with sensible defaults, so no `.env` file is required. Every value that
-changes between machines can still be overridden with an environment variable:
+Every value that changes between machines is read from an environment variable, and
+`settings.py` loads a `.env` from the project root before reading them. Only the two mail
+credentials have no usable default; everything else runs as it is:
 
 | Variable | Default | Purpose |
 |---|---|---|
@@ -313,13 +341,13 @@ changes between machines can still be overridden with an environment variable:
 | `BIDHAUS_CURRENCY` | `COP` | Currency every stored amount is expressed in |
 | `BIDHAUS_IDENTITY_DOCUMENT_ROOT` | `private-media/` | Where identity documents are kept, outside `MEDIA_ROOT` |
 | `BIDHAUS_SITE_URL` | `http://127.0.0.1:8000` | Address the links inside an email point at |
-| `BIDHAUS_EMAIL_BACKEND` | console backend | How email is delivered. See *Notifications* below |
-| `BIDHAUS_DEFAULT_FROM_EMAIL` | `BidHaus <no-responder@bidhaus.co>` | Address the notifications are sent from |
-| `BIDHAUS_EMAIL_HOST` | `localhost` | SMTP server, when the SMTP backend is used |
-| `BIDHAUS_EMAIL_PORT` | `25` | Port of the SMTP server |
-| `BIDHAUS_EMAIL_HOST_USER` | empty | SMTP user |
-| `BIDHAUS_EMAIL_HOST_PASSWORD` | empty | SMTP password |
-| `BIDHAUS_EMAIL_USE_TLS` | `false` | Whether to open the SMTP connection with TLS |
+| `BIDHAUS_EMAIL_HOST_USER` | empty | **Required.** The mailbox the notifications are sent from |
+| `BIDHAUS_EMAIL_HOST_PASSWORD` | empty | **Required.** Its app password, never the login password |
+| `BIDHAUS_EMAIL_BACKEND` | SMTP backend | Set it to the console backend to develop without sending |
+| `BIDHAUS_DEFAULT_FROM_EMAIL` | the value of `BIDHAUS_EMAIL_HOST_USER` | Address in the `From:` header |
+| `BIDHAUS_EMAIL_HOST` | `smtp.gmail.com` | SMTP server |
+| `BIDHAUS_EMAIL_PORT` | `587` | Port of the SMTP server |
+| `BIDHAUS_EMAIL_USE_TLS` | `true` | Whether to open the SMTP connection with TLS |
 | `BIDHAUS_EMAIL_TIMEOUT` | `10` | Seconds to wait for the SMTP server before giving up |
 
 ---
@@ -353,27 +381,38 @@ registering the bid that displaced the previous one.
 
 ### Where the emails go
 
+They are sent, for real, over SMTP. The notifications are part of the product, so the
+default is a working mailbox and not a console transcript. Fill in the two credentials of
+Step 4 and the three messages reach their recipient.
+
 Every message is queued with `transaction.on_commit`, so nothing is ever announced that the
 database rolled back a moment later, and a mail server that cannot be reached is written to
-the log instead of undoing the bid or the closing that caused the message.
+the log instead of undoing the bid or the closing that caused the message. That failure is
+printed by the `auctions.notifications` logger, so a wrong password shows up in the terminal
+rather than disappearing.
 
-By default the project uses Django's **console backend**: no mail server is needed and every
-notification is printed, whole, in the terminal running `runserver` or `close_auctions`. That
-is what makes the three requirements visible during a demonstration. To send them for real,
-point the backend at an SMTP server:
+`BIDHAUS_SITE_URL` matters as much as the credentials: an email is read outside the browser
+that opened the site, so the link it carries has to be absolute.
+
+To check the configuration without going through a whole auction:
 
 ```bash
-export BIDHAUS_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-export BIDHAUS_EMAIL_HOST=smtp.example.com
-export BIDHAUS_EMAIL_PORT=587
-export BIDHAUS_EMAIL_USE_TLS=true
-export BIDHAUS_EMAIL_HOST_USER=notificaciones@example.com
-export BIDHAUS_EMAIL_HOST_PASSWORD=…
-export BIDHAUS_SITE_URL=https://bidhaus.example.com
+python manage.py shell
+```
+```python
+from django.core.mail import send_mail
+send_mail("Prueba", "¿Llegó?", None, ["tucorreo@gmail.com"])   # devuelve 1 si salió
 ```
 
-`BIDHAUS_SITE_URL` matters: an email is read outside the browser that opened the site, so
-the link it carries has to be absolute.
+While developing, sending a real message on every bid gets in the way. Comment the backend
+back to the console in your own `.env` and the messages are printed in the terminal instead:
+
+```ini
+BIDHAUS_EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+```
+
+The tests never send anything: Django swaps the backend for an in-memory one on its own, and
+`auctions/tests/mailbox.py` is what reads that mailbox.
 
 | Email | Sent when | To |
 |---|---|---|
@@ -415,8 +454,9 @@ tells the people it concerns, and puts a verified identity behind every seller.
 Known limitations of this sprint:
 
 - Notifications are sent synchronously, in the same process that closed the auction or
-  registered the bid. That is what a project of this size needs; a real deployment would
-  hand them to a queue so that a slow mail server never delays a bid.
+  registered the bid, which means a bid that outbids somebody waits for the SMTP server
+  before the page answers — normally a second or two. That is what a project of this size
+  needs; a real deployment would hand them to a queue.
 - The seller-rating filter of FR03 is not implemented, because ratings depend on completed
   escrow transactions, which belong to a later sprint (FR24).
 - Escrow itself is not implemented yet, so the result email tells the winner that the seller
@@ -488,10 +528,14 @@ This also marks the winning bid and sends the result notifications. See
   closes it on the spot. In production, let cron run the command.
 
 ### No notification arrives
-- **Cause:** The default backend prints the emails instead of sending them.
-- **Solution:** Look at the terminal running `runserver` or `close_auctions`: the whole
-  message is printed there. To send them for real, set `BIDHAUS_EMAIL_BACKEND` and the SMTP
-  variables listed under *Configuration*.
+- **Cause:** Almost always the credentials. Look at the terminal: the
+  `auctions.notifications` logger prints what went wrong.
+- **`SMTPAuthenticationError`:** the password is not an app password, or two-step
+  verification is off on that Google account.
+- **Nothing at all in the log:** there was nothing to send. The first bid on an auction
+  outbids nobody, and a bidder who raises their own leading bid outbids nobody either.
+- **`ModuleNotFoundError: No module named 'dotenv'`:** run `pip install -r requirements.txt`
+  again; the `.env` is read by a package that was added in Sprint 2.
 
 ### The link inside a notification points at 127.0.0.1
 - **Cause:** `BIDHAUS_SITE_URL` still holds its development default.
