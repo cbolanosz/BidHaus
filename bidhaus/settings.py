@@ -7,7 +7,14 @@ so the repository never carries a secret or an absolute path.
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Credentials live in a .env that Git ignores, never in the repository. A real
+# environment variable wins over the file, so a server can set one without
+# editing anything, and .env.example lists every key this file expects.
+load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.environ.get("BIDHAUS_SECRET_KEY", "insecure-key-for-local-development")
 DEBUG = os.environ.get("BIDHAUS_DEBUG", "true").lower() == "true"
@@ -103,25 +110,42 @@ IDENTITY_DOCUMENT_ROOT = os.environ.get(
 )
 
 # The mail service BidHaus hands its notifications to (FR09, FR10, FR11).
-# The console backend is the default so the project runs with no mail server:
-# every message is printed to the terminal running the server. Point
-# BIDHAUS_EMAIL_BACKEND at the SMTP backend to send them for real.
+# Mail is sent for real: the notifications are part of the product, not a
+# console demonstration. Credentials come from the .env; the defaults below
+# only describe how to reach the provider, never who is sending.
 EMAIL_BACKEND = os.environ.get(
-    "BIDHAUS_EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+    "BIDHAUS_EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
 )
-EMAIL_HOST = os.environ.get("BIDHAUS_EMAIL_HOST", "localhost")
-EMAIL_PORT = int(os.environ.get("BIDHAUS_EMAIL_PORT", "25"))
+EMAIL_HOST = os.environ.get("BIDHAUS_EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.environ.get("BIDHAUS_EMAIL_PORT", "587"))
 EMAIL_HOST_USER = os.environ.get("BIDHAUS_EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("BIDHAUS_EMAIL_HOST_PASSWORD", "")
-EMAIL_USE_TLS = os.environ.get("BIDHAUS_EMAIL_USE_TLS", "false").lower() == "true"
+EMAIL_USE_TLS = os.environ.get("BIDHAUS_EMAIL_USE_TLS", "true").lower() == "true"
 EMAIL_TIMEOUT = int(os.environ.get("BIDHAUS_EMAIL_TIMEOUT", "10"))
-DEFAULT_FROM_EMAIL = os.environ.get(
-    "BIDHAUS_DEFAULT_FROM_EMAIL", "BidHaus <no-responder@bidhaus.co>"
-)
+
+# Gmail rewrites a sender that is not the authenticated account, so the account
+# itself is the sensible default rather than an address nobody owns.
+DEFAULT_FROM_EMAIL = os.environ.get("BIDHAUS_DEFAULT_FROM_EMAIL") or EMAIL_HOST_USER
 
 # Where this installation answers from. An email is read outside the browser
 # that opened the site, so the links it carries have to be absolute.
 SITE_URL = os.environ.get("BIDHAUS_SITE_URL", "http://127.0.0.1:8000")
+
+# A notification that could not be sent is logged instead of raised, so the bid
+# that caused it is never lost. This is what makes that line visible: without a
+# handler it would only reach Python's fallback and be easy to miss.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "loggers": {
+        "auctions.notifications": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        }
+    },
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
