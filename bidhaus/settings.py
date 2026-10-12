@@ -18,7 +18,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.environ.get("BIDHAUS_SECRET_KEY", "insecure-key-for-local-development")
-DEBUG = os.environ.get("BIDHAUS_DEBUG", "true").lower() == "true"
+# Off unless a machine asks for it. The safe value is the default, so a server
+# that was deployed without reading the documentation is not left exposing
+# tracebacks and settings to anyone who triggers an error.
+DEBUG = os.environ.get("BIDHAUS_DEBUG", "false").lower() == "true"
 ALLOWED_HOSTS = os.environ.get("BIDHAUS_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 INSTALLED_APPS = [
@@ -32,6 +35,7 @@ INSTALLED_APPS = [
     "accounts",
     "auctions",
     "escrow",
+    "analytics",
 ]
 
 MIDDLEWARE = [
@@ -102,6 +106,11 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+
+# Whether Django itself hands out the uploaded photographs. In production the
+# web server does it, so this stays off there; a machine that is showing the
+# error pages turns it on to keep DEBUG off without losing the images.
+SERVE_MEDIA_LOCALLY = os.environ.get("BIDHAUS_SERVE_MEDIA_LOCALLY", "false").lower() == "true"
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"

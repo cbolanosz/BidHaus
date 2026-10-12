@@ -19,7 +19,7 @@ from auctions.exceptions import (
 )
 from auctions.models import MAX_PHOTOGRAPHS, Auction, Bid, Photograph
 from auctions.notifications import notify_auction_result, notify_outbid_bidder
-from auctions.signals import auction_closed
+from auctions.signals import auction_closed, auction_published
 
 User = get_user_model()
 
@@ -42,6 +42,10 @@ def publish_auction(
     the catalogue without the photograph that DBR03 demands. The current price
     starts equal to the starting price, so the first bid is compared against a
     real amount instead of against a null.
+
+    Publishing is also what announces the auction to whoever scores it (FR25).
+    The announcement goes out after the photographs, because how many there are
+    is one of the things the score weighs.
     """
     if seller.role != User.Role.SELLER:
         raise NotASeller
@@ -60,6 +64,7 @@ def publish_auction(
     auction.full_clean()
     auction.save()
     add_photographs(auction, images)
+    auction_published.send(sender=Auction, auction=auction)
     return auction
 
 

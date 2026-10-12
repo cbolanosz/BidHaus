@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}No puedes ver esto — BidHaus{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <p class="error-code">403</p>
+    <h1>No puedes ver esto</h1>
+    <p>
+        {% if exception %}
+            {{ exception }}
+        {% else %}
+            Esta página es de otra persona. Los documentos de identidad y el dinero de
+            una venta solo los ven quienes participan en ella.
+        {% endif %}
+    </p>
+    <p class="help">
+        Si crees que deberías tener acceso, revisa con qué cuenta entraste: en BidHaus
+        una persona puede tener más de una.
+    </p>
+    <div class="form-actions">
+        <a class="button" href="{% url 'auctions:catalogue' %}">Ir al catálogo</a>
+    </div>
+</div>
+{% endblock %}

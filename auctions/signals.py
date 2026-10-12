@@ -8,6 +8,7 @@ new listener can be added without touching anything here.
 
 from django.dispatch import Signal
 
-# Sent inside the transaction that closes the auction, so whatever a listener
-# writes is committed with the closing or rolled back with it.
+# Both are sent inside the transaction that caused them, so whatever a listener
+# writes is committed with the fact or rolled back with it.
+auction_published = Signal()
 auction_closed = Signal()

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Esta página no existe — BidHaus{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <p class="error-code">404</p>
+    <h1>Esta página no existe</h1>
+    <p>
+        La dirección está mal escrita, o el lote que buscabas ya no está publicado.
+        Las subastas cerradas salen del catálogo.
+    </p>
+    <div class="form-actions">
+        <a class="button" href="{% url 'auctions:catalogue' %}">Ir al catálogo</a>
+    </div>
+</div>
+{% endblock %}

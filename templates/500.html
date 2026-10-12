@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Algo falló de nuestro lado — BidHaus</title>
+    <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    {# This page does not extend base.html on purpose. Django renders it with an #}
+    {# empty context, so anything the header reads about the user in session would #}
+    {# be missing; and when the failure is the database itself, a header that #}
+    {# queries it would fail a second time while reporting the first. #}
+    <header class="masthead">
+        <div class="shell masthead-inner">
+            <div class="masthead-brand">
+                <a class="wordmark" href="/">
+                    <img src="{% static 'img/logo-horizontal.svg' %}" alt="BidHaus" width="128" height="32">
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="shell content">
+        <div class="error-page">
+            <p class="error-code">500</p>
+            <h1>Algo falló de nuestro lado</h1>
+            <p>
+                No es culpa tuya y no perdiste nada: una puja registrada sigue
+                registrada, y un pago retenido sigue retenido. El error quedó anotado.
+            </p>
+            <div class="form-actions">
+                <a class="button" href="/">Ir al catálogo</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="shell">
+            <p>BidHaus — proyecto académico de la Universidad EAFIT. Los pagos son simulados.</p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}No pudimos procesar eso — BidHaus{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <p class="error-code">400</p>
+    <h1>No pudimos procesar eso</h1>
+    <p>
+        La petición llegó incompleta o con datos que el servidor no entiende. Suele
+        pasar cuando una página estuvo abierta demasiado tiempo.
+    </p>
+    <div class="form-actions">
+        <a class="button" href="{% url 'auctions:catalogue' %}">Volver a empezar</a>
+    </div>
+</div>
+{% endblock %}
