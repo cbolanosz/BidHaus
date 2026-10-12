@@ -34,14 +34,6 @@ the only requirements are Python and the three packages in `requirements.txt`.
 - **Terminal:** GNU bash 5.3.9 (x86_64-redhat-linux-gnu)
 - **Python:** 3.14.6
 
-**Machine 2 — _(name)_**
-
-- **Operating System:** _(fill in)_
-- **Processor:** _(fill in)_
-- **Memory:** _(fill in)_
-- **Terminal:** _(fill in)_
-- **Python:** _(fill in)_
-
 **Shared across every machine:** Django 6.0 · Pillow 12.3 · python-dotenv 1.1 · SQLite (bundled with Python)
 
 ---
