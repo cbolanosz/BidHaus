@@ -18,10 +18,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.environ.get("BIDHAUS_SECRET_KEY", "insecure-key-for-local-development")
-# Off unless a machine asks for it. The safe value is the default, so a server
-# that was deployed without reading the documentation is not left exposing
-# tracebacks and settings to anyone who triggers an error.
-DEBUG = os.environ.get("BIDHAUS_DEBUG", "false").lower() == "true"
+# On unless a machine says otherwise, so a fresh clone runs complete: with it off
+# runserver stops handing out the stylesheet and the photographs. A real server
+# sets it to false, which is what the deployment documentation says to do.
+DEBUG = os.environ.get("BIDHAUS_DEBUG", "true").lower() == "true"
 ALLOWED_HOSTS = os.environ.get("BIDHAUS_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 INSTALLED_APPS = [
@@ -107,10 +107,13 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# Whether Django itself hands out the uploaded photographs. In production the
-# web server does it, so this stays off there; a machine that is showing the
-# error pages turns it on to keep DEBUG off without losing the images.
-SERVE_MEDIA_LOCALLY = os.environ.get("BIDHAUS_SERVE_MEDIA_LOCALLY", "false").lower() == "true"
+# Whether Django itself hands out the uploaded photographs. In production the web
+# server does it, so it follows DEBUG; it is a setting of its own only so that a
+# machine showing the custom error pages can keep DEBUG off without losing the
+# images, which is the one case where the two needs pull apart.
+SERVE_MEDIA_LOCALLY = os.environ.get(
+    "BIDHAUS_SERVE_MEDIA_LOCALLY", str(DEBUG)
+).lower() == "true"
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
