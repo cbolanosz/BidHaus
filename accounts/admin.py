@@ -2,6 +2,7 @@
 
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import Group
 from django.urls import reverse
 from django.utils.html import format_html
 
@@ -22,7 +23,7 @@ class BidHausUserAdmin(UserAdmin):
     fieldsets = [
         (None, {"fields": ["email", "password"]}),
         ("Perfil", {"fields": ["full_name", "role", "is_verified"]}),
-        ("Permisos", {"fields": ["is_active", "is_staff", "is_superuser", "groups", "user_permissions"]}),
+        ("Permisos", {"fields": ["is_active", "is_staff", "is_superuser"]}),
         ("Fechas", {"fields": ["last_login", "date_joined"]}),
     ]
     add_fieldsets = [
@@ -97,3 +98,9 @@ class VerificationRequestAdmin(admin.ModelAdmin):
 
         if resolved:
             self.message_user(request, f"Se {past_tense} {resolved} solicitudes.")
+
+
+# BidHaus decides what a user may do from their role, never from a Django group
+# or a per-user permission. Leaving those in the administration would offer a
+# switch that no code in the project reads.
+admin.site.unregister(Group)

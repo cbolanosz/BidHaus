@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "django.contrib.humanize",
     "accounts",
     "auctions",
+    "escrow",
 ]
 
 MIDDLEWARE = [

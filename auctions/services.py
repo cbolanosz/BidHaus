@@ -19,6 +19,7 @@ from auctions.exceptions import (
 )
 from auctions.models import MAX_PHOTOGRAPHS, Auction, Bid, Photograph
 from auctions.notifications import notify_auction_result, notify_outbid_bidder
+from auctions.signals import auction_closed
 
 User = get_user_model()
 
@@ -129,8 +130,9 @@ def close_auction(auction):
     nobody bid on closes with no winning bid.
 
     Closing is also what announces the result to the winner and to the seller
-    (FR09, FR10). The early return above is what keeps that announcement from
-    being sent twice: an auction that is already closed is left alone.
+    (FR09, FR10) and what retains the payment in escrow (FR14). The early
+    return above is what keeps all of that from happening twice: an auction
+    that is already closed is left alone.
     """
     if not auction.is_open:
         return auction
@@ -138,6 +140,7 @@ def close_auction(auction):
     auction.state = Auction.State.CLOSED
     auction.winning_bid = auction.bids.first()
     auction.save(update_fields=["state", "winning_bid"])
+    auction_closed.send(sender=Auction, auction=auction)
     notify_auction_result(auction)
     return auction
 
