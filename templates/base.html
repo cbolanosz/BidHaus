@@ -28,6 +28,15 @@
 
                 {% if user.is_authenticated %}
                     <div class="capsule">
+                        {% if next_payment_to_confirm %}
+                            <a class="capsule-cell capsule-strong"
+                               href="{% url 'escrow:transaction_detail' next_payment_to_confirm.pk %}"
+                               title="{{ payments_awaiting_confirmation }} pago{{ payments_awaiting_confirmation|pluralize }} por confirmar">
+                                <span class="capsule-count">{{ payments_awaiting_confirmation }}</span>
+                                <span class="capsule-words">por confirmar</span>
+                            </a>
+                            <span class="capsule-rule" aria-hidden="true"></span>
+                        {% endif %}
                         {% if not user.is_verified %}
                             <a class="capsule-cell" href="{% url 'accounts:verification_request' %}">Verifica tu identidad</a>
                             <span class="capsule-rule" aria-hidden="true"></span>

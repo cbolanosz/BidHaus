@@ -16,6 +16,8 @@ from auctions.exceptions import (
 )
 from auctions.forms import AuctionForm, AuctionSearchForm, BidForm, PhotographUploadForm
 from auctions.models import MAX_PHOTOGRAPHS, Auction
+from escrow.services import find_transaction_for_auction
+
 from auctions.services import (
     add_photographs,
     close_auction_if_expired,
@@ -173,8 +175,24 @@ def _render_auction_detail(request, auction, form):
             "photographs": list_photographs(auction),
             "bids": list_bids(auction),
             "form": form,
+            "escrow_transaction": _escrow_transaction_for(auction, request.user),
         },
     )
+
+
+def _escrow_transaction_for(auction, user):
+    """The payment of this auction, offered only to the two sides of the sale.
+
+    An auction still open holds no payment, so the usual case costs no query.
+    """
+    if auction.is_open or not user.is_authenticated:
+        return None
+    escrow_transaction = find_transaction_for_auction(auction)
+    if escrow_transaction is None:
+        return None
+    if user.id in (escrow_transaction.buyer_id, escrow_transaction.seller_id):
+        return escrow_transaction
+    return None
 
 
 @login_required

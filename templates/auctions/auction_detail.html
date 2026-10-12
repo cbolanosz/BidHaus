@@ -68,6 +68,13 @@
                     Ganó {{ auction.winning_bid.bidder.full_name }} con
                     <span class="money">$ {{ auction.winning_bid.amount|floatformat:0|intcomma }} COP</span>.
                 </p>
+                {% if escrow_transaction %}
+                    <p class="winner">
+                        <a href="{% url 'escrow:transaction_detail' escrow_transaction.pk %}">
+                            Ver el pago en custodia
+                        </a>
+                    </p>
+                {% endif %}
             {% else %}
                 <p class="winner">Cerró sin pujas.</p>
             {% endif %}

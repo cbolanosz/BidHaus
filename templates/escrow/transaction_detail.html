@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Pago de {{ transaction.auction.title }} — BidHaus{% endblock %}
+
+{% block content %}
+<div class="lot-head">
+    <span class="eyebrow">Lote {{ transaction.auction.pk|stringformat:"03d" }}</span>
+    <h1>{{ transaction.auction.title }}</h1>
+    <p class="lede">
+        El dinero de esta venta está en custodia de BidHaus. Se libera hacia el vendedor
+        cuando el comprador confirma que recibió el artículo.
+    </p>
+</div>
+
+<div class="panel">
+    <dl class="facts">
+        <dt>Estado del pago</dt>
+        <dd><span class="state state-{{ transaction.state }}">{{ transaction.get_state_display }}</span></dd>
+        <dt>Monto</dt>
+        <dd class="money">$ {{ transaction.amount|floatformat:0|intcomma }} COP</dd>
+        <dt>Comprador</dt>
+        <dd>{{ transaction.buyer.full_name }}</dd>
+        <dt>Vendedor</dt>
+        <dd>{{ transaction.seller.full_name }}</dd>
+        <dt>En custodia desde</dt>
+        <dd>{{ transaction.created_at|date:"d/m/Y H:i" }}</dd>
+    </dl>
+</div>
+
+{% if may_confirm %}
+    <div class="panel">
+        <h2>¿Ya recibiste el artículo?</h2>
+        <p class="help">
+            Al confirmar, los $ {{ transaction.amount|floatformat:0|intcomma }} COP pasan a la cuenta
+            de {{ transaction.seller.full_name }}. No se puede deshacer.
+        </p>
+        <form method="post"
+              action="{% url 'escrow:transaction_confirm_reception' transaction.pk %}"
+              class="form">
+            {% csrf_token %}
+            <div class="form-actions">
+                <button class="button" type="submit">Confirmar que lo recibí</button>
+                <a class="button button-quiet"
+                   href="{% url 'auctions:auction_detail' transaction.auction.pk %}">Ver el lote</a>
+            </div>
+        </form>
+    </div>
+{% endif %}
+
+<section class="prose">
+    <h2>Historial del pago</h2>
+    <ol class="request-log">
+        {% for change in state_changes %}
+            <li>
+                <strong>{{ change.get_new_state_display }}</strong>
+                {% if change.actor %}
+                    · {{ change.actor.full_name }}
+                {% else %}
+                    · automático
+                {% endif %}
+                <span class="when">{{ change.timestamp|date:"d/m/Y H:i" }}</span>
+            </li>
+        {% endfor %}
+    </ol>
+</section>
+{% endblock %}

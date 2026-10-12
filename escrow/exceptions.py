@@ -19,3 +19,15 @@ class TransactionAlreadyExists(EscrowError):
 
 class StateChangeIsImmutable(EscrowError):
     """A state change is never modified nor deleted once created (DBR06)."""
+
+
+class NotTheBuyer(EscrowError):
+    """Only the buyer of a transaction may confirm that they received (FR15)."""
+
+
+class NotAParticipant(EscrowError):
+    """A transaction is readable by its buyer, its seller and an administrator."""
+
+
+class TransactionIsNotHeld(EscrowError):
+    """The money of this transaction has already moved: there is nothing to confirm."""

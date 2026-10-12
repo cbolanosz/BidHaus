@@ -143,6 +143,13 @@ img {
 
 .masthead-account {
     gap: 0.85rem;
+    min-width: 0;
+}
+
+@media (min-width: 56.01rem) {
+    .masthead-account {
+        flex-wrap: nowrap;
+    }
 }
 
 .masthead-nav {
@@ -171,8 +178,10 @@ img {
    height matches .button so both read as one row. */
 .capsule {
     display: flex;
+    flex-shrink: 1;
     align-items: stretch;
     overflow: hidden;
+    min-width: 0;
     min-height: 2.4rem;
     border: 1px solid var(--line);
     border-radius: 999px;
@@ -181,9 +190,11 @@ img {
 
 .capsule-cell {
     display: flex;
+    flex-shrink: 0;
     gap: 0.5rem;
     align-items: center;
-    padding: 0 0.875rem;
+    padding: 0 0.8rem;
+    white-space: nowrap;
     border: 0;
     background: none;
     color: var(--ink-2);
@@ -199,6 +210,21 @@ img {
 
 .capsule-cell:focus-visible {
     border-radius: 999px;
+}
+
+/* The number alone is what survives on a phone, so it reads as a count even
+ * without the words beside it. */
+.capsule-count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    padding: 0 0.3rem;
+    border-radius: 999px;
+    background: var(--cobalt);
+    color: var(--surface);
+    font-size: 0.78rem;
+    font-weight: 700;
 }
 
 .capsule-strong {
@@ -698,6 +724,23 @@ input[type="file"]::file-selector-button {
     color: var(--danger);
 }
 
+/* The four states the money of a sale can be in (UR03). «Retenido» keeps the
+ * cobalt of the default, because waiting is the normal case, not a warning. */
+.state-released {
+    background: rgba(10, 110, 60, 0.1);
+    color: var(--success);
+}
+
+.state-refunded {
+    background: rgba(90, 100, 112, 0.14);
+    color: var(--ink-2);
+}
+
+.state-in_dispute {
+    background: rgba(179, 18, 31, 0.1);
+    color: var(--danger);
+}
+
 /* ---------- Empty state ---------- */
 
 .empty {
@@ -1038,10 +1081,11 @@ input[type="file"]::file-selector-button {
         padding: 0 1.1rem;
     }
 
-    /* On a phone the avatar identifies the account on its own, so the header
-       stays two rows instead of four. */
+    /* On a phone the avatar identifies the account on its own, and the count
+       carries the pending payments, so the header stays two rows instead of four. */
     .capsule-name,
-    .capsule-rule {
+    .capsule-rule,
+    .capsule-words {
         display: none;
     }
 

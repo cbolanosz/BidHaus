@@ -112,8 +112,9 @@ class MyAuctionsViewTests(TestCase):
             auction = create_auction(seller=self.seller, title=f"Lote {index}")
             add_photographs(auction, [build_image()])
 
-        # session, user, auctions, photographs: four, whatever the list holds.
-        with self.assertNumQueries(4):
+        # session, user, the payments the header offers, auctions, photographs:
+        # five, whatever the list holds.
+        with self.assertNumQueries(5):
             self.client.get(self.url)
 
     def test_offers_the_list_from_the_header(self):
