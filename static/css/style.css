@@ -724,6 +724,11 @@ input[type="file"]::file-selector-button {
     color: var(--danger);
 }
 
+/* The figure the seller actually cares about, so it carries the weight. */
+.payout {
+    font-weight: 700;
+}
+
 /* The four states the money of a sale can be in (UR03). «Retenido» keeps the
  * cobalt of the default, because waiting is the normal case, not a warning. */
 .state-released {

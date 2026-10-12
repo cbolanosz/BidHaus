@@ -5,6 +5,7 @@ so the repository never carries a secret or an absolute path.
 """
 
 import os
+from decimal import Decimal
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -150,6 +151,11 @@ LOGGING = {
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# The cut BidHaus keeps when it releases the funds of a sale (FR20). It travels
+# as a setting because changing what the platform charges must not require
+# editing the code and deploying it again.
+COMMISSION_PERCENTAGE = Decimal(os.environ.get("BIDHAUS_COMMISSION_PERCENTAGE", "5"))
 
 # Currency every amount in the database is expressed in.
 CURRENCY = os.environ.get("BIDHAUS_CURRENCY", "COP")

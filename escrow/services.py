@@ -3,6 +3,7 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
+from escrow.commission import calculate_commission
 from escrow.exceptions import (
     AuctionHasNoWinner,
     AuctionIsNotClosed,
@@ -67,22 +68,34 @@ def list_state_changes(escrow_transaction):
 
 @transaction.atomic
 def confirm_reception(escrow_transaction, buyer):
-    """Let the buyer declare that the item arrived, which frees the money (FR15).
+    """Let the buyer declare that the item arrived (FR15).
 
     Only the buyer may do it: the whole point of retaining the payment is that
-    the person who paid is the one who decides it was earned. Confirming is
-    recorded as the transition it causes, with the buyer as its actor, so the
-    history answers who released the money and when.
+    the person who paid is the one who decides it was earned. What that
+    confirmation causes is the release, which is a use case of its own.
     """
     if escrow_transaction.buyer_id != buyer.id:
         raise NotTheBuyer
+    return release_funds(escrow_transaction, actor=buyer)
+
+
+@transaction.atomic
+def release_funds(escrow_transaction, actor):
+    """Hand the retained funds to the seller, minus the commission (FR16, FR20).
+
+    The commission is charged here and nowhere else, because it is the moment
+    the money changes hands. It is stored rather than recalculated on reading:
+    if the platform raises its percentage next year, a sale already settled
+    must keep the figure it was actually charged.
+    """
     if not escrow_transaction.is_held:
         raise TransactionIsNotHeld
 
     previous_state = escrow_transaction.state
+    escrow_transaction.commission = calculate_commission(escrow_transaction.amount)
     escrow_transaction.state = EscrowTransaction.State.RELEASED
-    escrow_transaction.save(update_fields=["state"])
-    record_state_change(escrow_transaction, previous_state=previous_state, actor=buyer)
+    escrow_transaction.save(update_fields=["commission", "state"])
+    record_state_change(escrow_transaction, previous_state=previous_state, actor=actor)
     return escrow_transaction
 
 

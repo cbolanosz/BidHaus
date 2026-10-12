@@ -1,6 +1,7 @@
 """HTTP layer: parse the request, call a service, render a template."""
 
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
@@ -16,6 +17,8 @@ from escrow.services import (
     list_state_changes,
 )
 
+User = get_user_model()
+
 
 @login_required
 def transaction_detail(request, transaction_id):
@@ -30,6 +33,7 @@ def transaction_detail(request, transaction_id):
             "transaction": escrow_transaction,
             "state_changes": list_state_changes(escrow_transaction),
             "may_confirm": _may_confirm(escrow_transaction, request.user),
+            "shows_breakdown": _shows_breakdown(escrow_transaction, request.user),
         },
     )
 
@@ -76,3 +80,16 @@ def _assert_may_read_or_403(escrow_transaction, user):
 def _may_confirm(escrow_transaction, user):
     """Whether this user is the one who can still confirm the reception."""
     return escrow_transaction.is_held and escrow_transaction.buyer_id == user.id
+
+
+def _shows_breakdown(escrow_transaction, user):
+    """Whether this user is owed the detail of the commission (FR20).
+
+    The buyer pays the amount of their bid and nothing else; what the platform
+    charges is a matter between BidHaus and the seller, so only the seller and
+    an administrator are shown it.
+    """
+    return (
+        escrow_transaction.seller_id == user.id
+        or user.role == User.Role.ADMINISTRATOR
+    )

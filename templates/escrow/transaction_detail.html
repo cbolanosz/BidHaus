@@ -17,8 +17,14 @@
     <dl class="facts">
         <dt>Estado del pago</dt>
         <dd><span class="state state-{{ transaction.state }}">{{ transaction.get_state_display }}</span></dd>
-        <dt>Monto</dt>
+        <dt>Monto de la venta</dt>
         <dd class="money">$ {{ transaction.amount|floatformat:0|intcomma }} COP</dd>
+        {% if shows_breakdown %}
+            <dt>Comisión de BidHaus</dt>
+            <dd class="money">− $ {{ transaction.commission_due|floatformat:0|intcomma }} COP</dd>
+            <dt>{% if transaction.is_held %}Recibirá{% else %}Recibió{% endif %} el vendedor</dt>
+            <dd class="money payout">$ {{ transaction.payout|floatformat:0|intcomma }} COP</dd>
+        {% endif %}
         <dt>Comprador</dt>
         <dd>{{ transaction.buyer.full_name }}</dd>
         <dt>Vendedor</dt>
@@ -32,8 +38,8 @@
     <div class="panel">
         <h2>¿Ya recibiste el artículo?</h2>
         <p class="help">
-            Al confirmar, los $ {{ transaction.amount|floatformat:0|intcomma }} COP pasan a la cuenta
-            de {{ transaction.seller.full_name }}. No se puede deshacer.
+            Al confirmar, el pago se libera hacia {{ transaction.seller.full_name }}.
+            No se puede deshacer.
         </p>
         <form method="post"
               action="{% url 'escrow:transaction_confirm_reception' transaction.pk %}"

@@ -3,6 +3,7 @@
 from django.conf import settings
 from django.db import models
 
+from escrow.commission import calculate_commission
 from escrow.exceptions import StateChangeIsImmutable
 
 NO_COMMISSION = 0
@@ -60,6 +61,24 @@ class EscrowTransaction(models.Model):
     def is_held(self):
         """Whether the money is still retained, waiting for the buyer."""
         return self.state == self.State.HELD
+
+    @property
+    def commission_due(self):
+        """The commission of this sale: the one charged, or the one it will carry.
+
+        While the money is retained nothing has been deducted yet, so the figure
+        shown is what the current percentage would take. Once released, it is
+        the amount actually kept, which never changes again even if the
+        percentage of the platform does.
+        """
+        if self.is_held:
+            return calculate_commission(self.amount)
+        return self.commission
+
+    @property
+    def payout(self):
+        """What reaches the seller once BidHaus takes its cut (FR16, FR20)."""
+        return self.amount - self.commission_due
 
 
 class StateChangeQuerySet(models.QuerySet):
