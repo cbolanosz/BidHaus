@@ -675,6 +675,29 @@ input[type="file"]::file-selector-button {
     font-size: 0.85rem;
 }
 
+/* The state of a lot only matters where closed and cancelled ones are listed
+ * next to open ones, which is the seller's own list (FR12). */
+.state {
+    display: inline-block;
+    margin-right: 0.35rem;
+    padding: 0.08rem 0.45rem;
+    border-radius: 999px;
+    background: rgba(27, 59, 212, 0.1);
+    color: var(--cobalt-deep);
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+.state-closed {
+    background: rgba(90, 100, 112, 0.14);
+    color: var(--ink-2);
+}
+
+.state-cancelled {
+    background: rgba(179, 18, 31, 0.1);
+    color: var(--danger);
+}
+
 /* ---------- Empty state ---------- */
 
 .empty {

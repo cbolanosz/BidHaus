@@ -79,6 +79,16 @@ def search_auctions(text=None, category=None, condition=None, minimum_price=None
     )
 
 
+def list_auctions_by_seller(seller):
+    """Return every auction that seller published, newest first (FR12).
+
+    Unlike the catalogue, this list is not narrowed to the open ones. A seller
+    consults it to follow what happened to each lot, so the ones that already
+    closed are precisely what they came to see.
+    """
+    return Auction.objects.by_seller(seller).for_seller_list()
+
+
 def find_auction(auction_id):
     """Return the auction with that identifier, or raise Auction.DoesNotExist."""
     return Auction.objects.select_related(

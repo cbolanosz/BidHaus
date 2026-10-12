@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load humanize auction_formats %}
+
+{% block title %}Mis subastas — BidHaus{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <p class="eyebrow">Tu cuenta</p>
+    <h1>Mis subastas</h1>
+    <p class="hero-lede">
+        {% if auctions %}
+            Has publicado {{ auctions|length }} lote{{ auctions|length|pluralize }}, del más reciente al más antiguo.
+        {% else %}
+            Todavía no has publicado ningún lote.
+        {% endif %}
+    </p>
+</section>
+
+{% if auctions %}
+    <ul class="lots">
+        {% for auction in auctions %}
+            <li>
+                <a class="lot" href="{% url 'auctions:auction_detail' auction.pk %}">
+                    {% if auction.main_photograph %}
+                        <div class="lot-figure">
+                            <img src="{{ auction.main_photograph.image.url }}" alt="Fotografía de {{ auction.title }}">
+                        </div>
+                    {% else %}
+                        <div class="lot-figure is-empty">Sin fotografías</div>
+                    {% endif %}
+
+                    <div class="lot-body">
+                        <p class="eyebrow">Lote {{ auction.pk|stringformat:"03d" }}</p>
+                        <h2 class="lot-title">{{ auction.title }}</h2>
+                        <p class="lot-price money">
+                            $ {{ auction.current_price|floatformat:0|intcomma }}<small>COP</small>
+                        </p>
+                        <p class="lot-meta">{{ auction.category.name }} · {{ auction.get_condition_display }}</p>
+
+                        <p class="lot-closing">
+                            <span class="state state-{{ auction.state }}">{{ auction.get_state_display }}</span>
+                            {% if auction.is_open %}
+                                Cierra en {{ auction.closing_date|timeuntil|largest_time_unit }}
+                            {% elif auction.winning_bid %}
+                                Vendida a {{ auction.winning_bid.bidder.full_name }}
+                            {% else %}
+                                Cerró sin pujas
+                            {% endif %}
+                        </p>
+                    </div>
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <div class="empty">
+        <p class="empty-title">Aún no has publicado nada</p>
+        <p>Cuando publiques tu primer lote aparecerá aquí, con su estado y su precio actual.</p>
+        <p><a href="{% url 'auctions:auction_create' %}">Publicar una subasta</a></p>
+    </div>
+{% endif %}
+{% endblock %}

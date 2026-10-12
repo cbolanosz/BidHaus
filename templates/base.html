@@ -17,6 +17,9 @@
                 </a>
                 <nav class="masthead-nav" aria-label="Principal">
                     <a class="nav-link" href="{% url 'auctions:catalogue' %}">Subastas</a>
+                    {% if user.is_authenticated %}
+                        <a class="nav-link" href="{% url 'auctions:my_auctions' %}">Mis subastas</a>
+                    {% endif %}
                 </nav>
             </div>
 

@@ -21,6 +21,7 @@ from auctions.services import (
     close_auction_if_expired,
     count_free_photograph_slots,
     find_auction,
+    list_auctions_by_seller,
     list_bids,
     list_photographs,
     place_bid,
@@ -43,6 +44,13 @@ def auction_catalogue(request):
         maximum_price=form.cleaned_data["maximum_price"],
     )
     return render(request, "auctions/catalogue.html", {"form": form, "auctions": auctions})
+
+
+@login_required
+def my_auctions(request):
+    """List every auction the user in session has published (FR12)."""
+    auctions = list_auctions_by_seller(request.user)
+    return render(request, "auctions/my_auctions.html", {"auctions": auctions})
 
 
 @login_required

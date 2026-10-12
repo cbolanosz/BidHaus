@@ -71,6 +71,20 @@ class AuctionQuerySet(models.QuerySet):
         """Fetch in advance everything a catalogue card shows, to avoid N+1 queries."""
         return self.select_related("seller", "category").prefetch_related("photographs")
 
+    def by_seller(self, seller):
+        """Every auction that seller published, whatever its state (FR12)."""
+        return self.filter(seller=seller)
+
+    def for_seller_list(self):
+        """Fetch in advance everything a card of the seller's own list shows.
+
+        The seller is the user in session, so it is not fetched again; the
+        winning bid is, because a closed lot shows who took it.
+        """
+        return self.select_related("category", "winning_bid__bidder").prefetch_related(
+            "photographs"
+        )
+
 
 class Auction(models.Model):
     """An item offered by a seller until its closing date is reached."""
