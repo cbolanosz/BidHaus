@@ -228,6 +228,10 @@ generate one. Create it at https://myaccount.google.com/apppasswords.
 A real environment variable always wins over the file, so a server can set one without
 editing anything.
 
+The copy also brings `BIDHAUS_DEBUG=true`, which a developer machine needs: with `DEBUG`
+off — the default, so that no server is deployed exposing tracebacks — `runserver` stops
+serving the stylesheet and the pages load with no styles.
+
 ### Step 5: Apply the Migrations
 
 This creates `db.sqlite3` with every table the project needs:

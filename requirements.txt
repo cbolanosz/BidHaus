@@ -1,3 +1,5 @@
-Django
-Pillow
-python-dotenv
+# Pinned to what the project is developed and tested against, so every machine
+# installs the same thing. These are the versions the deployment diagram names.
+Django==6.0.7
+Pillow==12.3.0
+python-dotenv==1.2.4
