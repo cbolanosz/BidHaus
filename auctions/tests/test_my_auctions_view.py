@@ -150,6 +150,24 @@ class MyAuctionsViewTests(TestCase):
         self.assertContains(response, "Pendiente de aprobación")
         self.assertContains(response, "está esperando la revisión")
 
+    def test_photograph_form_links_pending_auction_to_private_detail(self):
+        auction = create_auction(
+            seller=self.seller, state=Auction.State.PENDING
+        )
+
+        response = self.client.get(
+            reverse("auctions:auction_photographs", args=[auction.pk])
+        )
+
+        self.assertContains(
+            response,
+            reverse("auctions:my_auction_detail", args=[auction.pk]),
+        )
+        self.assertNotContains(
+            response,
+            reverse("auctions:auction_detail", args=[auction.pk]),
+        )
+
     def test_does_not_show_another_sellers_auction(self):
         auction = create_auction(
             seller=create_seller(), state=Auction.State.PENDING
