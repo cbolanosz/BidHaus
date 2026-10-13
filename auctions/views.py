@@ -23,6 +23,7 @@ from auctions.services import (
     close_auction_if_expired,
     count_free_photograph_slots,
     find_auction,
+    find_auction_for_seller,
     find_public_auction,
     list_auctions_by_seller,
     list_bids,
@@ -119,6 +120,25 @@ def auction_detail(request, auction_id):
     """
     auction = close_auction_if_expired(_find_public_auction_or_404(auction_id))
     return _render_auction_detail(request, auction, BidForm())
+
+
+@login_required
+def my_auction_detail(request, auction_id):
+    """Show a seller their auction request regardless of publication state."""
+    try:
+        auction = find_auction_for_seller(auction_id, request.user)
+    except Auction.DoesNotExist:
+        raise Http404("La subasta no existe.")
+
+    return render(
+        request,
+        "auctions/my_auction_detail.html",
+        {
+            "auction": auction,
+            "photographs": list_photographs(auction),
+            "trust_score": getattr(auction, "trust_score", None),
+        },
+    )
 
 
 @login_required

@@ -941,6 +941,54 @@ input[type="file"]::file-selector-button {
     color: var(--ink-2);
 }
 
+/* The owner sees the publication state without exposing it to the catalogue. */
+.seller-status {
+    display: grid;
+    gap: 0.35rem;
+    max-width: 42rem;
+    margin-top: 1.5rem;
+    padding: 1.25rem 1.4rem;
+    border-left: 4px solid var(--cobalt);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    background: rgba(27, 59, 212, 0.08);
+}
+
+.seller-status h2 {
+    font-size: 1.2rem;
+}
+
+.seller-status p {
+    color: var(--ink-2);
+    font-size: 0.95rem;
+}
+
+.seller-status .button {
+    justify-self: start;
+    margin-top: 0.45rem;
+}
+
+.seller-status-rejected {
+    border-left-color: var(--danger);
+    background: rgba(179, 18, 31, 0.08);
+}
+
+.seller-status-open {
+    border-left-color: var(--success);
+    background: rgba(10, 110, 60, 0.08);
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 1rem;
+    color: var(--ink-2);
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.back-link:hover {
+    color: var(--ink);
+}
+
 /* ---------- Trust score: a compact auction-house condition report ---------- */
 
 .trust-score {

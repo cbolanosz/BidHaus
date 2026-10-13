@@ -136,6 +136,7 @@ BidHaus
 │  │  │  ├─ auction_won.txt
 │  │  │  └─ outbid.txt
 │  │  ├─ auction_detail.html
+│  │  ├─ my_auction_detail.html
 │  │  ├─ auction_form.html
 │  │  ├─ catalogue.html
 │  │  └─ photograph_form.html
@@ -295,6 +296,8 @@ Quit the server with CONTROL-C.
 |---|---|---|
 | `/` | Catalogue of open auctions, with search by text, category, condition and price range | FR03 |
 | `/auctions/new/` | Publish an auction with its first photographs | FR01, FR02 |
+| `/auctions/mine/` | Lists the seller's own auctions, including pending requests | FR12 |
+| `/auctions/mine/<id>/` | Private detail for the owner, including pending and rejected requests | FR12, FR36 |
 | `/auctions/<id>/` | Auction detail: photographs, current price, countdown, bid form and full bid history | FR04 |
 | `/auctions/<id>/bid/` | Registers a bid submitted from the detail page | FR05, FR06 |
 | `/auctions/<id>/photographs/` | Adds photographs to an auction, up to 8 | FR02 |

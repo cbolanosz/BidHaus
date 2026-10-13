@@ -139,6 +139,11 @@ def find_public_auction(auction_id):
     )
 
 
+def find_auction_for_seller(auction_id, seller):
+    """Return one of the seller's auctions, including unpublished requests."""
+    return find_auction_queryset().get(pk=auction_id, seller=seller)
+
+
 def find_auction_queryset():
     """Build the detail query with its stored trust score already loaded."""
     return Auction.objects.select_related(
