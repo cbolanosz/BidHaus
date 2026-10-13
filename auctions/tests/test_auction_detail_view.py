@@ -89,5 +89,7 @@ class AuctionDetailViewTests(TestCase):
             reverse("auctions:auction_detail", args=[pending_auction.pk])
         )
 
-        self.assertContains(response, f"{TrustScore.objects.get(auction=pending_auction).score}/100")
+        score = TrustScore.objects.get(auction=pending_auction).score
+        self.assertContains(response, f'aria-label="Puntaje de confianza: {score} de 100"')
+        self.assertContains(response, f"<strong>{score}</strong>")
         self.assertContains(response, "El vendedor tiene su identidad verificada")
