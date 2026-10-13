@@ -9,6 +9,14 @@ class NotASeller(AuctionError):
     """Only a user registered with the seller role may publish an auction."""
 
 
+class NotAnAdministrator(AuctionError):
+    """Only an administrator may resolve an auction publication request."""
+
+
+class AuctionAlreadyResolved(AuctionError):
+    """An auction publication request already has an administrative decision."""
+
+
 class BidIsImmutable(AuctionError):
     """A bid cannot be modified nor deleted once it is registered (DBR04)."""
 

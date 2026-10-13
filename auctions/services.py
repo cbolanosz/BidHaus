@@ -9,9 +9,11 @@ from django.utils import timezone
 
 from auctions.exceptions import (
     AuctionClosed,
+    AuctionAlreadyResolved,
     BiddingIsBusy,
     BidTooLow,
     NoPhotographs,
+    NotAnAdministrator,
     NotABidder,
     NotASeller,
     SellerCannotBid,
@@ -59,12 +61,42 @@ def publish_auction(
         starting_price=starting_price,
         current_price=starting_price,
         closing_date=closing_date,
-        state=Auction.State.OPEN,
+        state=Auction.State.PENDING,
     )
     auction.full_clean()
     auction.save()
     add_photographs(auction, images)
+    return auction
+
+
+@transaction.atomic
+def approve_auction_publication(auction, administrator):
+    """Approve a publication request and calculate its trust score."""
+    if administrator.role != User.Role.ADMINISTRATOR:
+        raise NotAnAdministrator
+    if not auction.is_pending:
+        raise AuctionAlreadyResolved
+
+    auction.state = Auction.State.OPEN
+    auction.resolved_by = administrator
+    auction.resolved_at = timezone.now()
+    auction.save(update_fields=["state", "resolved_by", "resolved_at"])
     auction_published.send(sender=Auction, auction=auction)
+    return auction
+
+
+@transaction.atomic
+def reject_auction_publication(auction, administrator):
+    """Reject a publication request while retaining its audit history."""
+    if administrator.role != User.Role.ADMINISTRATOR:
+        raise NotAnAdministrator
+    if not auction.is_pending:
+        raise AuctionAlreadyResolved
+
+    auction.state = Auction.State.REJECTED
+    auction.resolved_by = administrator
+    auction.resolved_at = timezone.now()
+    auction.save(update_fields=["state", "resolved_by", "resolved_at"])
     return auction
 
 
@@ -98,8 +130,22 @@ def list_auctions_by_seller(seller):
 def find_auction(auction_id):
     """Return the auction with that identifier, or raise Auction.DoesNotExist."""
     return Auction.objects.select_related(
-        "seller", "category", "winning_bid__bidder"
+        "seller", "category", "winning_bid__bidder", "trust_score"
     ).get(pk=auction_id)
+
+
+def find_public_auction(auction_id):
+    """Return an approved auction, hiding unresolved publication requests."""
+    return find_auction_queryset().get(
+        pk=auction_id, state__in=[Auction.State.OPEN, Auction.State.CLOSED]
+    )
+
+
+def find_auction_queryset():
+    """Build the detail query with its stored trust score already loaded."""
+    return Auction.objects.select_related(
+        "seller", "category", "winning_bid__bidder", "trust_score"
+    )
 
 
 def close_expired_auctions():
