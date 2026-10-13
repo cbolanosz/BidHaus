@@ -253,10 +253,11 @@ class WhatTheScoreExplainsTests(TestCase):
 
 
 class PublishingScoresTheAuctionTests(TestCase):
-    """FR25 is triggered by FR01: scoring happens when the lot is published."""
+    """FR25 is triggered by FR36: scoring happens when publication is approved."""
 
     def test_publishing_leaves_the_auction_scored(self):
         from auctions.services import publish_auction
+        from auctions.services import approve_auction_publication
         from auctions.tests.factories import build_image
 
         seller = create_seller()
@@ -270,6 +271,10 @@ class PublishingScoresTheAuctionTests(TestCase):
             closing_date=timezone.now() + timedelta(days=2),
             images=[build_image() for _ in range(3)],
         )
+        administrator = create_seller()
+        administrator.role = administrator.Role.ADMINISTRATOR
+        administrator.save(update_fields=["role"])
+        approve_auction_publication(auction, administrator)
 
         trust_score = find_trust_score(auction)
         self.assertIsNotNone(trust_score)
@@ -277,10 +282,12 @@ class PublishingScoresTheAuctionTests(TestCase):
 
     def test_the_photographs_are_counted_because_they_arrive_first(self):
         from auctions.services import publish_auction
+        from auctions.services import approve_auction_publication
         from auctions.tests.factories import build_image
 
+        seller = create_seller()
         auction = publish_auction(
-            seller=create_seller(),
+            seller=seller,
             category=create_category(),
             title="Cámara Yashica FX-3",
             description=LONG_DESCRIPTION,
@@ -289,6 +296,10 @@ class PublishingScoresTheAuctionTests(TestCase):
             closing_date=timezone.now() + timedelta(days=2),
             images=[build_image() for _ in range(3)],
         )
+        administrator = create_seller()
+        administrator.role = administrator.Role.ADMINISTRATOR
+        administrator.save(update_fields=["role"])
+        approve_auction_publication(auction, administrator)
 
         answers = find_trust_score(auction).factors
         met = next(

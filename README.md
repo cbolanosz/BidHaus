@@ -70,7 +70,7 @@ BidHaus
 │  ├─ tests
 │  │  └─ …                               One module per requirement
 │  ├─ __init__.py
-│  ├─ admin.py                           Where an administrator resolves a request
+│  ├─ admin.py                           Where an administrator resolves identity requests
 │  ├─ apps.py
 │  ├─ exceptions.py
 │  ├─ forms.py
@@ -89,6 +89,7 @@ BidHaus
 │  │  ├─ 0002_photograph.py
 │  │  ├─ 0003_bid.py
 │  │  ├─ 0004_auction_winning_bid.py
+│  │  ├─ 0005_auction_resolved_at_auction_resolved_by_and_more.py
 │  │  └─ __init__.py
 │  ├─ templatetags
 │  │  ├─ __init__.py
@@ -99,7 +100,7 @@ BidHaus
 │  │  ├─ mailbox.py                      Reading the emails a use case sent
 │  │  └─ …                               One module per requirement
 │  ├─ __init__.py
-│  ├─ admin.py
+│  ├─ admin.py                           Where an administrator resolves publication requests
 │  ├─ apps.py
 │  ├─ exceptions.py                      Errors raised when a business rule is not met
 │  ├─ forms.py                           Request validation
@@ -135,6 +136,7 @@ BidHaus
 │  │  │  ├─ auction_won.txt
 │  │  │  └─ outbid.txt
 │  │  ├─ auction_detail.html
+│  │  ├─ my_auction_detail.html
 │  │  ├─ auction_form.html
 │  │  ├─ catalogue.html
 │  │  └─ photograph_form.html
@@ -294,6 +296,8 @@ Quit the server with CONTROL-C.
 |---|---|---|
 | `/` | Catalogue of open auctions, with search by text, category, condition and price range | FR03 |
 | `/auctions/new/` | Publish an auction with its first photographs | FR01, FR02 |
+| `/auctions/mine/` | Lists the seller's own auctions, including pending requests | FR12 |
+| `/auctions/mine/<id>/` | Private detail for the owner, including pending and rejected requests | FR12, FR36 |
 | `/auctions/<id>/` | Auction detail: photographs, current price, countdown, bid form and full bid history | FR04 |
 | `/auctions/<id>/bid/` | Registers a bid submitted from the detail page | FR05, FR06 |
 | `/auctions/<id>/photographs/` | Adds photographs to an auction, up to 8 | FR02 |

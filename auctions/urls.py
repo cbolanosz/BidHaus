@@ -10,6 +10,11 @@ urlpatterns = [
     path("", views.auction_catalogue, name="catalogue"),
     path("auctions/new/", views.auction_create, name="auction_create"),
     path("auctions/mine/", views.my_auctions, name="my_auctions"),
+    path(
+        "auctions/mine/<int:auction_id>/",
+        views.my_auction_detail,
+        name="my_auction_detail",
+    ),
     path("auctions/<int:auction_id>/", views.auction_detail, name="auction_detail"),
     path("auctions/<int:auction_id>/bid/", views.auction_bid, name="auction_bid"),
     path(

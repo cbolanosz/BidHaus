@@ -20,7 +20,7 @@
     <ul class="lots">
         {% for auction in auctions %}
             <li>
-                <a class="lot" href="{% url 'auctions:auction_detail' auction.pk %}">
+                <a class="lot" href="{% url 'auctions:my_auction_detail' auction.pk %}">
                     {% if auction.main_photograph %}
                         <div class="lot-figure">
                             <img src="{{ auction.main_photograph.image.url }}" alt="Fotografía de {{ auction.title }}">

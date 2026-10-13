@@ -107,6 +107,10 @@
     <p>{{ auction.description|linebreaksbr }}</p>
 </section>
 
+{% if trust_score %}
+    {% include "auctions/_trust_score.html" %}
+{% endif %}
+
 <section class="ladder">
     <h2>Historial de pujas</h2>
 

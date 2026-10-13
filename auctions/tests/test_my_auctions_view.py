@@ -40,6 +40,18 @@ class MyAuctionsViewTests(TestCase):
         self.assertTemplateUsed(response, "auctions/my_auctions.html")
         self.assertContains(response, "Cámara Yashica FX-3")
 
+    def test_links_each_auction_to_the_seller_detail(self):
+        auction = create_auction(
+            seller=self.seller, state=Auction.State.PENDING
+        )
+
+        response = self.client.get(self.url)
+
+        self.assertContains(
+            response,
+            reverse("auctions:my_auction_detail", args=[auction.pk]),
+        )
+
     def test_hides_the_auctions_of_another_seller(self):
         create_auction(seller=create_seller(), title="Reloj de otra vendedora")
 
@@ -121,3 +133,61 @@ class MyAuctionsViewTests(TestCase):
         response = self.client.get(reverse("auctions:catalogue"))
 
         self.assertContains(response, 'href="/auctions/mine/"')
+
+    def test_shows_a_pending_auction_to_its_owner(self):
+        auction = create_auction(
+            seller=self.seller,
+            title="Solicitud pendiente",
+            state=Auction.State.PENDING,
+        )
+
+        response = self.client.get(
+            reverse("auctions:my_auction_detail", args=[auction.pk])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "auctions/my_auction_detail.html")
+        self.assertContains(response, "Pendiente de aprobación")
+        self.assertContains(response, "está esperando la revisión")
+
+    def test_photograph_form_links_pending_auction_to_private_detail(self):
+        auction = create_auction(
+            seller=self.seller, state=Auction.State.PENDING
+        )
+
+        response = self.client.get(
+            reverse("auctions:auction_photographs", args=[auction.pk])
+        )
+
+        self.assertContains(
+            response,
+            reverse("auctions:my_auction_detail", args=[auction.pk]),
+        )
+        self.assertNotContains(
+            response,
+            reverse("auctions:auction_detail", args=[auction.pk]),
+        )
+
+    def test_does_not_show_another_sellers_auction(self):
+        auction = create_auction(
+            seller=create_seller(), state=Auction.State.PENDING
+        )
+
+        response = self.client.get(
+            reverse("auctions:my_auction_detail", args=[auction.pk])
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_requires_login_for_the_seller_detail(self):
+        auction = create_auction(seller=self.seller)
+        self.client.logout()
+
+        response = self.client.get(
+            reverse("auctions:my_auction_detail", args=[auction.pk])
+        )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('accounts:log_in')}?next={reverse('auctions:my_auction_detail', args=[auction.pk])}",
+        )

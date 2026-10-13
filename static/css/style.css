@@ -941,6 +941,202 @@ input[type="file"]::file-selector-button {
     color: var(--ink-2);
 }
 
+/* The owner sees the publication state without exposing it to the catalogue. */
+.seller-status {
+    display: grid;
+    gap: 0.35rem;
+    max-width: 42rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding: 1.25rem 1.4rem;
+    border-left: 4px solid var(--cobalt);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    background: rgba(27, 59, 212, 0.08);
+}
+
+.seller-status h2 {
+    font-size: 1.2rem;
+}
+
+.seller-status p {
+    color: var(--ink-2);
+    font-size: 0.95rem;
+}
+
+.seller-status .button {
+    justify-self: start;
+    margin-top: 0.45rem;
+}
+
+.seller-status-rejected {
+    border-left-color: var(--danger);
+    background: rgba(179, 18, 31, 0.08);
+}
+
+.seller-status-open {
+    border-left-color: var(--success);
+    background: rgba(10, 110, 60, 0.08);
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 1rem;
+    color: var(--ink-2);
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.back-link:hover {
+    color: var(--ink);
+}
+
+/* ---------- Trust score: a compact auction-house condition report ---------- */
+
+.trust-score {
+    position: relative;
+    max-width: 56rem;
+    margin-top: 3.5rem;
+    overflow: hidden;
+    padding: clamp(1.35rem, 1rem + 1vw, 2rem);
+    border-radius: 18px;
+    background: var(--ink);
+    color: var(--surface);
+}
+
+.trust-score::before {
+    position: absolute;
+    top: -5rem;
+    right: -4rem;
+    width: 15rem;
+    height: 15rem;
+    border: 1px solid rgba(245, 197, 24, 0.28);
+    border-radius: 50%;
+    content: "";
+}
+
+.trust-score-head {
+    position: relative;
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.trust-score .eyebrow {
+    color: var(--amber);
+}
+
+.trust-score h2 {
+    margin-top: 0.35rem;
+    color: var(--surface);
+}
+
+.trust-score-intro {
+    max-width: 38ch;
+    margin-top: 0.55rem;
+    color: #B8C0CB;
+    font-size: 0.92rem;
+}
+
+.trust-score-meter {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 7.2rem;
+    height: 7.2rem;
+    border-radius: 50%;
+    background: conic-gradient(
+        var(--amber) calc(var(--score) * 1%),
+        rgba(255, 255, 255, 0.14) 0
+    );
+}
+
+.trust-score-meter-inner {
+    display: grid;
+    place-items: center;
+    width: 5.75rem;
+    height: 5.75rem;
+    border-radius: 50%;
+    background: var(--ink);
+    line-height: 1;
+}
+
+.trust-score-meter strong {
+    font-size: 1.85rem;
+    letter-spacing: -0.05em;
+}
+
+.trust-score-meter span {
+    margin-top: -0.65rem;
+    color: #B8C0CB;
+    font-size: 0.75rem;
+}
+
+.trust-factors {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    margin: 1.65rem 0 0;
+    padding: 1.25rem 0 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+    list-style: none;
+}
+
+.trust-factor {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    min-width: 0;
+    padding: 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.055);
+}
+
+.trust-factor-met {
+    border-color: rgba(245, 197, 24, 0.42);
+    background: rgba(245, 197, 24, 0.1);
+}
+
+.trust-factor-mark {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    border: 1px solid #778290;
+    border-radius: 50%;
+    color: #B8C0CB;
+    font-size: 0.78rem;
+    line-height: 1;
+}
+
+.trust-factor-met .trust-factor-mark {
+    border-color: var(--amber);
+    color: var(--amber);
+}
+
+.trust-factor-copy {
+    display: grid;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
+.trust-factor-label {
+    color: var(--surface);
+    font-size: 0.92rem;
+    line-height: 1.4;
+}
+
+.trust-factor-points {
+    color: #B8C0CB;
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
 /* ---------- The bid ladder: the history is a price rising over time ---------- */
 
 .ladder {
@@ -1130,6 +1326,28 @@ input[type="file"]::file-selector-button {
 
     .facts dd {
         text-align: left;
+    }
+
+    .trust-score-head {
+        align-items: flex-start;
+    }
+
+    .trust-score-meter {
+        width: 5.5rem;
+        height: 5.5rem;
+    }
+
+    .trust-score-meter-inner {
+        width: 4.35rem;
+        height: 4.35rem;
+    }
+
+    .trust-score-meter strong {
+        font-size: 1.4rem;
+    }
+
+    .trust-factors {
+        grid-template-columns: 1fr;
     }
 }
 

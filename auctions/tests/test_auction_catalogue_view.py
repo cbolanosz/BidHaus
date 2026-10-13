@@ -26,6 +26,17 @@ class AuctionCatalogueViewTests(TestCase):
         self.assertTemplateUsed(response, "auctions/catalogue.html")
         self.assertContains(response, "Cámara Yashica FX-3")
 
+    def test_hides_publication_requests_until_they_are_approved(self):
+        create_auction(
+            title="Subasta pendiente",
+            category=self.cameras,
+            state=Auction.State.PENDING,
+        )
+
+        response = self.client.get(self.url)
+
+        self.assertNotContains(response, "Subasta pendiente")
+
     def test_narrows_the_list_with_the_filters_of_the_query_string(self):
         create_auction(title="Cámara Yashica FX-3", category=self.cameras)
         create_auction(title="Cien años de soledad", category=self.books)

@@ -5,8 +5,17 @@ import tempfile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from analytics.models import TrustScore
+from auctions.models import Auction
 from auctions.services import add_photographs
-from auctions.tests.factories import build_image, create_auction, create_bid, create_bidder
+from auctions.services import approve_auction_publication
+from auctions.tests.factories import (
+    build_image,
+    create_auction,
+    create_bid,
+    create_bidder,
+    create_seller,
+)
 
 
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp())
@@ -52,9 +61,35 @@ class AuctionDetailViewTests(TestCase):
         self.assertContains(response, "Todavía nadie ha pujado")
 
     def test_reads_the_page_with_a_fixed_number_of_queries(self):
-        """The auction, its photographs and its bids: three, whatever the bid count."""
+        """The auction and score do not add queries beyond its collections."""
         for amount in range(300000, 310000, 1000):
             create_bid(self.auction, str(amount))
 
         with self.assertNumQueries(3):
             self.client.get(self.url)
+
+    def test_hides_a_pending_publication_request(self):
+        self.auction.state = Auction.State.PENDING
+        self.auction.save(update_fields=["state"])
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_displays_the_stored_trust_score_and_factors(self):
+        pending_auction = create_auction(
+            seller=create_seller(), state=Auction.State.PENDING
+        )
+        administrator = create_seller()
+        administrator.role = administrator.Role.ADMINISTRATOR
+        administrator.save(update_fields=["role"])
+        approve_auction_publication(pending_auction, administrator)
+
+        response = self.client.get(
+            reverse("auctions:auction_detail", args=[pending_auction.pk])
+        )
+
+        score = TrustScore.objects.get(auction=pending_auction).score
+        self.assertContains(response, f'aria-label="Puntaje de confianza: {score} de 100"')
+        self.assertContains(response, f"<strong>{score}</strong>")
+        self.assertContains(response, "El vendedor tiene su identidad verificada")

@@ -69,7 +69,10 @@ class AuctionQuerySet(models.QuerySet):
 
     def for_catalogue(self):
         """Fetch in advance everything a catalogue card shows, to avoid N+1 queries."""
-        return self.select_related("seller", "category").prefetch_related("photographs")
+        return (
+            self.select_related("seller", "category", "trust_score")
+            .prefetch_related("photographs")
+        )
 
     def by_seller(self, seller):
         """Every auction that seller published, whatever its state (FR12)."""
@@ -90,9 +93,11 @@ class Auction(models.Model):
     """An item offered by a seller until its closing date is reached."""
 
     class State(models.TextChoices):
+        PENDING = "pending", "Pendiente de aprobación"
         OPEN = "open", "Abierta"
         CLOSED = "closed", "Cerrada"
         CANCELLED = "cancelled", "Cancelada"
+        REJECTED = "rejected", "Rechazada"
 
     class Condition(models.TextChoices):
         NEW = "new", "Nuevo"
@@ -123,7 +128,9 @@ class Auction(models.Model):
     )
     current_price = models.DecimalField("precio actual", max_digits=12, decimal_places=2)
     closing_date = models.DateTimeField("fecha de cierre")
-    state = models.CharField("estado", max_length=20, choices=State.choices, default=State.OPEN)
+    state = models.CharField(
+        "estado", max_length=20, choices=State.choices, default=State.PENDING
+    )
     winning_bid = models.ForeignKey(
         "Bid",
         on_delete=models.PROTECT,
@@ -133,6 +140,15 @@ class Auction(models.Model):
         verbose_name="puja ganadora",
     )
     published_at = models.DateTimeField("fecha de publicación", auto_now_add=True)
+    resolved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="resolved_auctions",
+        null=True,
+        blank=True,
+        verbose_name="resuelta por",
+    )
+    resolved_at = models.DateTimeField("fecha de resolución", null=True, blank=True)
 
     objects = AuctionQuerySet.as_manager()
 
@@ -148,6 +164,16 @@ class Auction(models.Model):
     def is_open(self):
         """Whether the auction is still in its bidding period."""
         return self.state == self.State.OPEN
+
+    @property
+    def is_pending(self):
+        """Whether an administrator still has to decide on publication."""
+        return self.state == self.State.PENDING
+
+    @property
+    def is_rejected(self):
+        """Whether an administrator refused this publication request."""
+        return self.state == self.State.REJECTED
 
     @property
     def main_photograph(self):

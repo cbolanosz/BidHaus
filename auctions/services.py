@@ -9,9 +9,11 @@ from django.utils import timezone
 
 from auctions.exceptions import (
     AuctionClosed,
+    AuctionAlreadyResolved,
     BiddingIsBusy,
     BidTooLow,
     NoPhotographs,
+    NotAnAdministrator,
     NotABidder,
     NotASeller,
     SellerCannotBid,
@@ -35,7 +37,7 @@ BID_RETRY_BACKOFF_SECONDS = 0.1
 def publish_auction(
     seller, category, title, description, condition, starting_price, closing_date, images
 ):
-    """Publish an auction with its first photographs (FR01).
+    """Create a publication request with its first photographs (FR01, FR36).
 
     Only a user registered with the seller role may publish. The auction and its
     photographs are stored in the same transaction, so an auction never reaches
@@ -43,9 +45,7 @@ def publish_auction(
     starts equal to the starting price, so the first bid is compared against a
     real amount instead of against a null.
 
-    Publishing is also what announces the auction to whoever scores it (FR25).
-    The announcement goes out after the photographs, because how many there are
-    is one of the things the score weighs.
+    Approval, not request creation, announces the auction to whoever scores it.
     """
     if seller.role != User.Role.SELLER:
         raise NotASeller
@@ -59,12 +59,42 @@ def publish_auction(
         starting_price=starting_price,
         current_price=starting_price,
         closing_date=closing_date,
-        state=Auction.State.OPEN,
+        state=Auction.State.PENDING,
     )
     auction.full_clean()
     auction.save()
     add_photographs(auction, images)
+    return auction
+
+
+@transaction.atomic
+def approve_auction_publication(auction, administrator):
+    """Approve a publication request and trigger its trust-score snapshot (FR36)."""
+    if administrator.role != User.Role.ADMINISTRATOR:
+        raise NotAnAdministrator
+    if not auction.is_pending:
+        raise AuctionAlreadyResolved
+
+    auction.state = Auction.State.OPEN
+    auction.resolved_by = administrator
+    auction.resolved_at = timezone.now()
+    auction.save(update_fields=["state", "resolved_by", "resolved_at"])
     auction_published.send(sender=Auction, auction=auction)
+    return auction
+
+
+@transaction.atomic
+def reject_auction_publication(auction, administrator):
+    """Reject a publication request while retaining its audit history."""
+    if administrator.role != User.Role.ADMINISTRATOR:
+        raise NotAnAdministrator
+    if not auction.is_pending:
+        raise AuctionAlreadyResolved
+
+    auction.state = Auction.State.REJECTED
+    auction.resolved_by = administrator
+    auction.resolved_at = timezone.now()
+    auction.save(update_fields=["state", "resolved_by", "resolved_at"])
     return auction
 
 
@@ -98,8 +128,27 @@ def list_auctions_by_seller(seller):
 def find_auction(auction_id):
     """Return the auction with that identifier, or raise Auction.DoesNotExist."""
     return Auction.objects.select_related(
-        "seller", "category", "winning_bid__bidder"
+        "seller", "category", "winning_bid__bidder", "trust_score"
     ).get(pk=auction_id)
+
+
+def find_public_auction(auction_id):
+    """Return an approved auction, hiding unresolved publication requests."""
+    return find_auction_queryset().get(
+        pk=auction_id, state__in=[Auction.State.OPEN, Auction.State.CLOSED]
+    )
+
+
+def find_auction_for_seller(auction_id, seller):
+    """Return one of the seller's auctions, including unpublished requests."""
+    return find_auction_queryset().get(pk=auction_id, seller=seller)
+
+
+def find_auction_queryset():
+    """Build the detail query with its stored trust score already loaded."""
+    return Auction.objects.select_related(
+        "seller", "category", "winning_bid__bidder", "trust_score"
+    )
 
 
 def close_expired_auctions():

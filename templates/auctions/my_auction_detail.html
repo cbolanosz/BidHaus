@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load humanize auction_formats %}
+
+{% block title %}{{ auction.title }} — Mis subastas — BidHaus{% endblock %}
+
+{% block content %}
+<div class="lot-head">
+    <a class="back-link" href="{% url 'auctions:my_auctions' %}">← Volver a mis subastas</a>
+    <span class="eyebrow">Lote {{ auction.pk|stringformat:"03d" }} · Tu publicación</span>
+    <h1>{{ auction.title }}</h1>
+</div>
+
+<section class="seller-status seller-status-{{ auction.state }}">
+    <span class="eyebrow">Estado de la publicación</span>
+    <h2>{{ auction.get_state_display }}</h2>
+    {% if auction.is_pending %}
+        <p>Tu solicitud fue recibida y está esperando la revisión de un administrador.</p>
+    {% elif auction.is_rejected %}
+        <p>Esta solicitud no fue aprobada. Puedes revisar sus datos y fotografías desde aquí.</p>
+    {% elif auction.is_open %}
+        <p>La publicación está activa y visible en el catálogo.</p>
+        <a class="button button-quiet" href="{% url 'auctions:auction_detail' auction.pk %}">
+            Ver publicación pública
+        </a>
+    {% else %}
+        <p>Esta publicación ya no acepta pujas.</p>
+    {% endif %}
+</section>
+
+<div class="detail seller-detail">
+    <ul class="gallery">
+        {% for photograph in photographs %}
+            <li>
+                <img src="{{ photograph.image.url }}"
+                     alt="Fotografía {{ photograph.display_order }} de {{ auction.title }}">
+            </li>
+        {% empty %}
+            <li class="is-empty">Sin fotografías</li>
+        {% endfor %}
+    </ul>
+
+    <div class="bid-panel">
+        <div class="price-now">
+            <span class="eyebrow">Precio actual</span>
+            <p class="amount money">$ {{ auction.current_price|floatformat:0|intcomma }}<small>COP</small></p>
+        </div>
+
+        <dl class="facts">
+            <dt>Estado del artículo</dt><dd>{{ auction.get_condition_display }}</dd>
+            <dt>Precio inicial</dt><dd class="money">$ {{ auction.starting_price|floatformat:0|intcomma }}</dd>
+            <dt>Cierre</dt><dd>{{ auction.closing_date|date:"d/m/Y H:i" }}</dd>
+            <dt>Solicitud enviada</dt><dd>{{ auction.published_at|date:"d/m/Y H:i" }}</dd>
+        </dl>
+    </div>
+</div>
+
+<section class="prose">
+    <h2>Sobre el artículo</h2>
+    <p>{{ auction.description|linebreaksbr }}</p>
+</section>
+
+{% if trust_score %}
+    {% include "auctions/_trust_score.html" %}
+{% endif %}
+{% endblock %}
