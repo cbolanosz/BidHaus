@@ -947,6 +947,7 @@ input[type="file"]::file-selector-button {
     gap: 0.35rem;
     max-width: 42rem;
     margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
     padding: 1.25rem 1.4rem;
     border-left: 4px solid var(--cobalt);
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
