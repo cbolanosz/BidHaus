@@ -70,7 +70,7 @@ BidHaus
 │  ├─ tests
 │  │  └─ …                               One module per requirement
 │  ├─ __init__.py
-│  ├─ admin.py                           Where an administrator resolves a request
+│  ├─ admin.py                           Where an administrator resolves identity requests
 │  ├─ apps.py
 │  ├─ exceptions.py
 │  ├─ forms.py
@@ -89,6 +89,7 @@ BidHaus
 │  │  ├─ 0002_photograph.py
 │  │  ├─ 0003_bid.py
 │  │  ├─ 0004_auction_winning_bid.py
+│  │  ├─ 0005_auction_resolved_at_auction_resolved_by_and_more.py
 │  │  └─ __init__.py
 │  ├─ templatetags
 │  │  ├─ __init__.py
@@ -99,7 +100,7 @@ BidHaus
 │  │  ├─ mailbox.py                      Reading the emails a use case sent
 │  │  └─ …                               One module per requirement
 │  ├─ __init__.py
-│  ├─ admin.py
+│  ├─ admin.py                           Where an administrator resolves publication requests
 │  ├─ apps.py
 │  ├─ exceptions.py                      Errors raised when a business rule is not met
 │  ├─ forms.py                           Request validation

@@ -23,6 +23,7 @@ from auctions.services import (
     close_auction_if_expired,
     count_free_photograph_slots,
     find_auction,
+    find_public_auction,
     list_auctions_by_seller,
     list_bids,
     list_photographs,
@@ -85,7 +86,8 @@ def auction_create(request):
 
     messages.success(
         request,
-        f"Se publicó la subasta «{auction.title}». Puedes añadir más fotografías.",
+        f"Se envió la solicitud de publicación de «{auction.title}». "
+        "Puedes añadir más fotografías mientras espera revisión.",
     )
     return redirect("auctions:auction_photographs", auction_id=auction.pk)
 
@@ -115,7 +117,7 @@ def auction_detail(request, auction_id):
     The auction is closed first if its date has passed, so that a visitor never
     sees a countdown on an auction that is already over (FR07).
     """
-    auction = close_auction_if_expired(_find_auction_or_404(auction_id))
+    auction = close_auction_if_expired(_find_public_auction_or_404(auction_id))
     return _render_auction_detail(request, auction, BidForm())
 
 
@@ -165,6 +167,14 @@ def _find_auction_or_404(auction_id):
         raise Http404("La subasta no existe.")
 
 
+def _find_public_auction_or_404(auction_id):
+    """Return only an approved auction, or answer 404 for private requests."""
+    try:
+        return find_public_auction(auction_id)
+    except Auction.DoesNotExist:
+        raise Http404("La subasta no existe.")
+
+
 def _render_auction_detail(request, auction, form):
     """Render the detail page with everything a visitor sees on it."""
     return render(
@@ -175,6 +185,7 @@ def _render_auction_detail(request, auction, form):
             "photographs": list_photographs(auction),
             "bids": list_bids(auction),
             "form": form,
+            "trust_score": getattr(auction, "trust_score", None),
             "escrow_transaction": _escrow_transaction_for(auction, request.user),
         },
     )

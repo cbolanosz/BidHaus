@@ -37,7 +37,7 @@ BID_RETRY_BACKOFF_SECONDS = 0.1
 def publish_auction(
     seller, category, title, description, condition, starting_price, closing_date, images
 ):
-    """Publish an auction with its first photographs (FR01).
+    """Create a publication request with its first photographs (FR01, FR36).
 
     Only a user registered with the seller role may publish. The auction and its
     photographs are stored in the same transaction, so an auction never reaches
@@ -45,9 +45,7 @@ def publish_auction(
     starts equal to the starting price, so the first bid is compared against a
     real amount instead of against a null.
 
-    Publishing is also what announces the auction to whoever scores it (FR25).
-    The announcement goes out after the photographs, because how many there are
-    is one of the things the score weighs.
+    Approval, not request creation, announces the auction to whoever scores it.
     """
     if seller.role != User.Role.SELLER:
         raise NotASeller
@@ -71,7 +69,7 @@ def publish_auction(
 
 @transaction.atomic
 def approve_auction_publication(auction, administrator):
-    """Approve a publication request and calculate its trust score."""
+    """Approve a publication request and trigger its trust-score snapshot (FR36)."""
     if administrator.role != User.Role.ADMINISTRATOR:
         raise NotAnAdministrator
     if not auction.is_pending:

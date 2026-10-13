@@ -38,10 +38,10 @@ class PublishAuctionTests(TestCase):
         arguments.update(overrides)
         return publish_auction(**arguments)
 
-    def test_publishes_an_open_auction(self):
+    def test_creates_a_pending_publication_request(self):
         auction = self.publish()
 
-        self.assertEqual(auction.state, Auction.State.OPEN)
+        self.assertEqual(auction.state, Auction.State.PENDING)
         self.assertEqual(Auction.objects.count(), 1)
 
     def test_current_price_starts_at_the_starting_price(self):

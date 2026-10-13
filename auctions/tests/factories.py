@@ -63,6 +63,7 @@ def create_auction(seller=None, **overrides):
         "starting_price": Decimal("250000.00"),
         "current_price": Decimal("250000.00"),
         "closing_date": timezone.now() + timedelta(days=2),
+        "state": Auction.State.OPEN,
     }
     fields.update(overrides)
     return Auction.objects.create(**fields)

@@ -107,6 +107,21 @@
     <p>{{ auction.description|linebreaksbr }}</p>
 </section>
 
+{% if trust_score %}
+<section class="prose trust-score">
+    <h2>Índice de confianza</h2>
+    <p class="amount">{{ trust_score.score }}/100</p>
+    <ul class="facts">
+        {% for factor in trust_score.factors %}
+            <li>
+                {% if factor.met %}✓{% else %}—{% endif %}
+                {{ factor.label }} ({{ factor.points }} puntos)
+            </li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+
 <section class="ladder">
     <h2>Historial de pujas</h2>
 
