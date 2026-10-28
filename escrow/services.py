@@ -12,7 +12,7 @@ from escrow.exceptions import (
     TransactionAlreadyExists,
     TransactionIsNotHeld,
 )
-from escrow.models import EscrowTransaction, StateChange
+from escrow.models import Dispute, EscrowTransaction, StateChange
 
 User = get_user_model()
 
@@ -99,10 +99,40 @@ def release_funds(escrow_transaction, actor):
     return escrow_transaction
 
 
+@transaction.atomic
+def open_dispute(escrow_transaction, buyer, description):
+    """Register the claim of a buyer who did not get what was sold (FR17).
+
+    Only the buyer, and only while the money is still retained: once it reached
+    the seller there is nothing left for BidHaus to hold back. Opening the
+    claim moves the transaction to «in_dispute», which is what keeps the funds
+    from being released until an administrator decides, and what stops the same
+    sale from being argued twice.
+    """
+    if escrow_transaction.buyer_id != buyer.id:
+        raise NotTheBuyer
+    if not escrow_transaction.is_held:
+        raise TransactionIsNotHeld
+
+    dispute = Dispute.objects.create(
+        transaction=escrow_transaction, opened_by=buyer, description=description
+    )
+    previous_state = escrow_transaction.state
+    escrow_transaction.state = EscrowTransaction.State.IN_DISPUTE
+    escrow_transaction.save(update_fields=["state"])
+    record_state_change(escrow_transaction, previous_state=previous_state, actor=buyer)
+    return dispute
+
+
+def find_dispute(escrow_transaction):
+    """Return the dispute of that transaction, or None if it has none."""
+    return Dispute.objects.filter(transaction=escrow_transaction).first()
+
+
 def find_transaction(transaction_id):
     """Return that transaction, or raise EscrowTransaction.DoesNotExist."""
     return EscrowTransaction.objects.select_related(
-        "auction", "buyer", "seller"
+        "auction", "buyer", "seller", "dispute"
     ).get(pk=transaction_id)
 
 

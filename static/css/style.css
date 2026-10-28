@@ -746,6 +746,15 @@ input[type="file"]::file-selector-button {
     color: var(--danger);
 }
 
+/* What the buyer wrote when they opened the dispute (FR17): set apart, because
+ * it is somebody's words and not the voice of the site. */
+.quote {
+    margin: 1rem 0 0;
+    padding: 0.25rem 0 0.25rem 1.25rem;
+    border-left: 3px solid var(--line);
+    color: var(--ink);
+}
+
 /* ---------- Empty state ---------- */
 
 .empty {

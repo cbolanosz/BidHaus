@@ -17,4 +17,9 @@ urlpatterns = [
         views.transaction_confirm_reception,
         name="transaction_confirm_reception",
     ),
+    path(
+        "transactions/<int:transaction_id>/dispute/",
+        views.transaction_open_dispute,
+        name="transaction_open_dispute",
+    ),
 ]

@@ -51,6 +51,22 @@
                    href="{% url 'auctions:auction_detail' transaction.auction.pk %}">Ver el lote</a>
             </div>
         </form>
+        <p class="help">
+            ¿No es lo que compraste, o nunca llegó?
+            <a href="{% url 'escrow:transaction_open_dispute' transaction.pk %}">Abre una disputa</a>
+            y el pago sigue retenido hasta que un administrador decida.
+        </p>
+    </div>
+{% endif %}
+
+{% if dispute %}
+    <div class="panel">
+        <h2>Disputa {{ dispute.get_state_display|lower }}</h2>
+        <p class="help">
+            Abierta por {{ dispute.opened_by.full_name }}
+            el {{ dispute.opened_at|date:"d/m/Y H:i" }}.
+        </p>
+        <blockquote class="quote">{{ dispute.description|linebreaksbr }}</blockquote>
     </div>
 {% endif %}
 

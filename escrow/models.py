@@ -139,3 +139,47 @@ class StateChange(models.Model):
         if not self._state.adding:
             raise StateChangeIsImmutable
         super().save(*args, **kwargs)
+
+
+class Dispute(models.Model):
+    """The claim of a buyer who did not receive what was sold (DBR07).
+
+    At most one per transaction, which the one-to-one relation enforces in the
+    database: a sale is argued once, and that single thread is what an
+    administrator reads to resolve it.
+    """
+
+    class State(models.TextChoices):
+        OPEN = "open", "Abierta"
+        RESOLVED = "resolved", "Resuelta"
+
+    transaction = models.OneToOneField(
+        EscrowTransaction,
+        on_delete=models.PROTECT,
+        related_name="dispute",
+        verbose_name="transacción",
+    )
+    opened_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="disputes_opened",
+        verbose_name="abierta por",
+    )
+    description = models.TextField("descripción")
+    state = models.CharField(
+        "estado", max_length=20, choices=State.choices, default=State.OPEN
+    )
+    opened_at = models.DateTimeField("fecha de apertura", auto_now_add=True)
+
+    class Meta:
+        ordering = ["-opened_at"]
+        verbose_name = "disputa"
+        verbose_name_plural = "disputas"
+
+    def __str__(self):
+        return f"{self.transaction.auction.title} · {self.get_state_display()}"
+
+    @property
+    def is_open(self):
+        """Whether the claim is still waiting for an administrator (FR19)."""
+        return self.state == self.State.OPEN

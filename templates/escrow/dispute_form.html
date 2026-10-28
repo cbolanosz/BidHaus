@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Abrir una disputa — BidHaus{% endblock %}
+
+{% block content %}
+<div class="lot-head">
+    <span class="eyebrow">Lote {{ transaction.auction.pk|stringformat:"03d" }}</span>
+    <h1>Abrir una disputa</h1>
+    <p class="lede">
+        Si lo que recibiste no es lo que se publicó, o nunca llegó, cuéntanos qué pasó.
+        Tus $ {{ transaction.amount|floatformat:0|intcomma }} COP siguen retenidos
+        mientras un administrador revisa el caso.
+    </p>
+</div>
+
+<div class="panel">
+    <form method="post" class="form" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <ul class="errors">
+                {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+        {% endif %}
+
+        {% for field in form %}
+            <div class="field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+                {% if field.errors %}
+                    <ul class="errors">
+                        {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <div class="form-actions">
+            <button class="button" type="submit">Abrir la disputa</button>
+            <a class="button button-quiet"
+               href="{% url 'escrow:transaction_detail' transaction.pk %}">Volver al pago</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

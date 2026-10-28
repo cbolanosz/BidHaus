@@ -2,7 +2,7 @@
 
 from django.contrib import admin
 
-from escrow.models import EscrowTransaction, StateChange
+from escrow.models import Dispute, EscrowTransaction, StateChange
 
 
 class StateChangeInline(admin.TabularInline):
@@ -27,6 +27,22 @@ class EscrowTransactionAdmin(admin.ModelAdmin):
     search_fields = ["auction__title", "buyer__email", "seller__email"]
     readonly_fields = ["auction", "buyer", "seller", "amount", "commission", "state", "created_at"]
     inlines = [StateChangeInline]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(Dispute)
+class DisputeAdmin(admin.ModelAdmin):
+    """Reading only: a buyer opens a dispute from the site, never from here."""
+
+    list_display = ["transaction", "opened_by", "state", "opened_at"]
+    list_filter = ["state"]
+    search_fields = ["transaction__auction__title", "opened_by__email"]
+    readonly_fields = ["transaction", "opened_by", "description", "state", "opened_at"]
 
     def has_add_permission(self, request):
         return False
