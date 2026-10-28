@@ -191,3 +191,36 @@ class MyAuctionsViewTests(TestCase):
             response,
             f"{reverse('accounts:log_in')}?next={reverse('auctions:my_auction_detail', args=[auction.pk])}",
         )
+
+
+class SellerReachesThePaymentTests(TestCase):
+    """A sold lot has money behind it, and its page is where the seller finds it."""
+
+    def setUp(self):
+        from auctions.tests.factories import create_bid, create_bidder
+        from escrow.services import hold_payment
+
+        self.seller = create_seller()
+        self.auction = create_auction(seller=self.seller, state=Auction.State.CLOSED)
+        self.auction.winning_bid = create_bid(self.auction, "400000", create_bidder())
+        self.auction.save(update_fields=["winning_bid"])
+        self.transaction = hold_payment(self.auction)
+        self.url = reverse("auctions:my_auction_detail", args=[self.auction.pk])
+        self.client.force_login(self.seller)
+
+    def test_offers_the_link_to_the_retained_payment(self):
+        response = self.client.get(self.url)
+
+        self.assertContains(response, "Ver el pago en custodia")
+        self.assertContains(
+            response, reverse("escrow:transaction_detail", args=[self.transaction.pk])
+        )
+
+    def test_a_lot_with_no_payment_offers_nothing(self):
+        auction = create_auction(seller=self.seller, state=Auction.State.CLOSED)
+
+        response = self.client.get(
+            reverse("auctions:my_auction_detail", args=[auction.pk])
+        )
+
+        self.assertNotContains(response, "Ver el pago en custodia")

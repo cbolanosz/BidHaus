@@ -137,6 +137,7 @@ def my_auction_detail(request, auction_id):
             "auction": auction,
             "photographs": list_photographs(auction),
             "trust_score": getattr(auction, "trust_score", None),
+            "escrow_transaction": _escrow_transaction_for(auction, request.user),
         },
     )
 

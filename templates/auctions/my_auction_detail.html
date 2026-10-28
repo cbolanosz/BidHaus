@@ -24,6 +24,12 @@
         </a>
     {% else %}
         <p>Esta publicación ya no acepta pujas.</p>
+        {% if escrow_transaction %}
+            <a class="button button-quiet"
+               href="{% url 'escrow:transaction_detail' escrow_transaction.pk %}">
+                Ver el pago en custodia
+            </a>
+        {% endif %}
     {% endif %}
 </section>
 
