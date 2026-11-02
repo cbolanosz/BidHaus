@@ -1,6 +1,7 @@
 """Use cases of the auctions app. Views call these; they never touch the ORM."""
 
 import time
+from dataclasses import dataclass
 
 from django.contrib.auth import get_user_model
 from django.db import OperationalError, transaction
@@ -151,16 +152,41 @@ def find_auction_queryset():
     )
 
 
+@dataclass(frozen=True)
+class ClosingFailure:
+    """An auction the run could not close, and what stopped it."""
+
+    auction: Auction
+    error: Exception
+
+
 def close_expired_auctions():
     """Close every auction whose closing date has already passed (FR07).
 
     Idempotent: an auction that is no longer open is not selected again, so
-    running this twice closes nothing the second time. Returns what it closed.
+    running this twice closes nothing the second time.
+
+    One auction that cannot be closed must not keep the rest open. This runs
+    unattended from cron, so without this a single bad row would stall every
+    closing behind it. Each auction is closed in its own transaction, so the
+    one that failed leaves nothing half written and stays open for the next run.
+
+    The error is not narrowed to a type because the apps that react to the
+    closing are deliberately unknown here: they subscribe to auction_closed,
+    and this module must not import them to learn what they can raise.
+
+    Returns the auctions it closed and the failures it could not.
     """
-    expired_auctions = list(Auction.objects.expired())
-    for auction in expired_auctions:
-        close_auction(auction)
-    return expired_auctions
+    closed_auctions = []
+    failures = []
+    for auction in list(Auction.objects.expired()):
+        try:
+            close_auction(auction)
+        except Exception as error:
+            failures.append(ClosingFailure(auction=auction, error=error))
+        else:
+            closed_auctions.append(auction)
+    return closed_auctions, failures
 
 
 def close_auction_if_expired(auction):
