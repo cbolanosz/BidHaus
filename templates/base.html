@@ -49,6 +49,15 @@
                             </a>
                             <span class="capsule-rule" aria-hidden="true"></span>
                         {% endif %}
+                        {% if next_sale_to_rate %}
+                            <a class="capsule-cell"
+                               href="{% url 'reputation:rate' next_sale_to_rate.pk %}"
+                               title="{{ sales_to_rate }} venta{{ sales_to_rate|pluralize }} por calificar">
+                                <span class="capsule-count">{{ sales_to_rate }}</span>
+                                <span class="capsule-words">por calificar</span>
+                            </a>
+                            <span class="capsule-rule" aria-hidden="true"></span>
+                        {% endif %}
                         {% if not user.is_verified %}
                             <a class="capsule-cell" href="{% url 'accounts:verification_request' %}">Verifica tu identidad</a>
                             <span class="capsule-rule" aria-hidden="true"></span>

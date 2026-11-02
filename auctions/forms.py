@@ -97,6 +97,14 @@ class AuctionSearchForm(forms.Form):
     maximum_price = forms.DecimalField(
         label="Precio hasta", min_value=0, decimal_places=2, required=False
     )
+    minimum_seller_rating = forms.TypedChoiceField(
+        label="Calificación del vendedor",
+        coerce=int,
+        choices=[("", "Cualquiera")]
+        + [(score, f"{score} estrellas o más") for score in (5, 4, 3, 2)],
+        required=False,
+        empty_value=None,
+    )
 
     def clean(self):
         """Reject a price range whose lower end is above its upper end."""

@@ -54,7 +54,14 @@
                         <p class="lot-price money">
                             $ {{ auction.current_price|floatformat:0|intcomma }}<small>COP</small>
                         </p>
-                        <p class="lot-meta">{{ auction.category.name }} · {{ auction.get_condition_display }}</p>
+                        <p class="lot-meta">
+                            {{ auction.category.name }} · {{ auction.get_condition_display }}
+                            {% if auction.seller_rating %}
+                                · <span class="rating-stars" aria-hidden="true">★</span>
+                                {{ auction.seller_rating|floatformat:1 }}
+                                <span class="rating-count">({{ auction.seller_rating_count }})</span>
+                            {% endif %}
+                        </p>
                         <p class="lot-closing">Cierra en {{ auction.closing_date|timeuntil|largest_time_unit }}</p>
                     </div>
                 </a>

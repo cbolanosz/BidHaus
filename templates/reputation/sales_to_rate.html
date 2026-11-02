@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Ventas por calificar — BidHaus{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <p class="eyebrow">Tu cuenta</p>
+    <h1>Ventas por calificar</h1>
+    <p class="hero-lede">
+        {% if sales %}
+            Tienes {{ sales|length }} venta{{ sales|length|pluralize }} terminada{{ sales|length|pluralize }}
+            sin calificar. Cuenta cómo te fue con la otra parte.
+        {% else %}
+            No tienes ninguna venta pendiente de calificar.
+        {% endif %}
+    </p>
+</section>
+
+{% if sales %}
+    <ul class="lots">
+        {% for sale in sales %}
+            <li>
+                <a class="lot" href="{% url 'reputation:rate' sale.pk %}">
+                    <div class="lot-body">
+                        <p class="eyebrow">Lote {{ sale.auction.pk|stringformat:"03d" }}</p>
+                        <h2 class="lot-title">{{ sale.auction.title }}</h2>
+                        <p class="lot-price money">
+                            $ {{ sale.amount|floatformat:0|intcomma }}<small>COP</small>
+                        </p>
+                        <p class="lot-meta">
+                            {% if sale.buyer_id == user.id %}
+                                Le compraste a {{ sale.seller.full_name }}
+                            {% else %}
+                                Le vendiste a {{ sale.buyer.full_name }}
+                            {% endif %}
+                        </p>
+                    </div>
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <div class="empty">
+        <p class="empty-title">Nada por calificar</p>
+        <p>Cuando termines una compra o una venta aparecerá aquí.</p>
+    </div>
+{% endif %}
+{% endblock %}

@@ -99,7 +99,14 @@ def reject_auction_publication(auction, administrator):
     return auction
 
 
-def search_auctions(text=None, category=None, condition=None, minimum_price=None, maximum_price=None):
+def search_auctions(
+    text=None,
+    category=None,
+    condition=None,
+    minimum_price=None,
+    maximum_price=None,
+    minimum_seller_rating=None,
+):
     """Return the open auctions that match the filters of the catalogue (FR03).
 
     A filter that receives no value does not narrow the search, so calling this
@@ -112,6 +119,7 @@ def search_auctions(text=None, category=None, condition=None, minimum_price=None
         .with_condition(condition)
         .priced_from(minimum_price)
         .priced_up_to(maximum_price)
+        .from_sellers_rated_at_least(minimum_seller_rating)
         .for_catalogue()
     )
 
@@ -128,9 +136,7 @@ def list_auctions_by_seller(seller):
 
 def find_auction(auction_id):
     """Return the auction with that identifier, or raise Auction.DoesNotExist."""
-    return Auction.objects.select_related(
-        "seller", "category", "winning_bid__bidder", "trust_score"
-    ).get(pk=auction_id)
+    return find_auction_queryset().get(pk=auction_id)
 
 
 def find_public_auction(auction_id):
@@ -146,10 +152,10 @@ def find_auction_for_seller(auction_id, seller):
 
 
 def find_auction_queryset():
-    """Build the detail query with its stored trust score already loaded."""
+    """Build the detail query with the trust score and the seller average loaded."""
     return Auction.objects.select_related(
         "seller", "category", "winning_bid__bidder", "trust_score"
-    )
+    ).with_seller_rating()
 
 
 @dataclass(frozen=True)

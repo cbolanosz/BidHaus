@@ -96,6 +96,14 @@
                         Verificado
                     </span>
                 {% endif %}
+                {% if auction.seller_rating %}
+                    <span class="rating"
+                          title="Promedio de {{ auction.seller_rating_count }} calificaci{{ auction.seller_rating_count|pluralize:"ón,ones" }} recibida{{ auction.seller_rating_count|pluralize }}">
+                        <span class="rating-stars" aria-hidden="true">★</span>
+                        {{ auction.seller_rating|floatformat:1 }}
+                        <span class="rating-count">({{ auction.seller_rating_count }})</span>
+                    </span>
+                {% endif %}
             </dd>
             <dt>Cierre</dt><dd>{{ auction.closing_date|date:"d/m/Y H:i" }}</dd>
         </dl>
@@ -106,10 +114,6 @@
     <h2>Sobre el artículo</h2>
     <p>{{ auction.description|linebreaksbr }}</p>
 </section>
-
-{% if trust_score %}
-    {% include "auctions/_trust_score.html" %}
-{% endif %}
 
 <section class="ladder">
     <h2>Historial de pujas</h2>
@@ -133,4 +137,8 @@
         </div>
     {% endif %}
 </section>
+
+{% if trust_score %}
+    {% include "auctions/_trust_score.html" %}
+{% endif %}
 {% endblock %}

@@ -46,6 +46,7 @@ def auction_catalogue(request):
         condition=form.cleaned_data["condition"],
         minimum_price=form.cleaned_data["minimum_price"],
         maximum_price=form.cleaned_data["maximum_price"],
+        minimum_seller_rating=form.cleaned_data["minimum_seller_rating"],
     )
     return render(request, "auctions/catalogue.html", {"form": form, "auctions": auctions})
 

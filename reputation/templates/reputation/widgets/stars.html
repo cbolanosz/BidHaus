@@ -1,0 +1,14 @@
+{% comment %}
+The options arrive from the highest score to the lowest and the row is drawn in
+reverse, so that a star can colour the ones before it: in CSS a selector reaches
+the siblings that come after, never the ones before.
+{% endcomment %}
+<div class="stars">
+    {% for group, options, index in widget.optgroups %}{% for option in options %}
+        <input type="radio" name="{{ option.name }}" value="{{ option.value|stringformat:'s' }}"
+               id="{{ option.attrs.id }}"{% if option.selected %} checked{% endif %}>
+        <label for="{{ option.attrs.id }}">
+            <span class="visually-hidden">{{ option.label }}</span>
+        </label>
+    {% endfor %}{% endfor %}
+</div>

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Calificar a {{ counterpart.full_name }} — BidHaus{% endblock %}
+
+{% block content %}
+<div class="lot-head">
+    <span class="eyebrow">Lote {{ transaction.auction.pk|stringformat:"03d" }}</span>
+    <h1>Califica a {{ counterpart.full_name }}</h1>
+    <p class="lede">
+        {{ transaction.auction.title }} · $ {{ transaction.amount|floatformat:0|intcomma }} COP.
+        La calificación es pública y no se puede cambiar.
+    </p>
+</div>
+
+<div class="panel">
+    <form method="post" class="form" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <ul class="errors">
+                {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+        {% endif %}
+
+        {% for field in form %}
+            {% if field.use_fieldset %}
+                <fieldset class="field">
+                    <legend>{{ field.label }}</legend>
+                    {{ field }}
+                    {% if field.errors %}
+                        <ul class="errors">
+                            {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+                        </ul>
+                    {% endif %}
+                </fieldset>
+            {% else %}
+                <div class="field">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <ul class="errors">
+                            {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endfor %}
+
+        <div class="form-actions">
+            <button class="button" type="submit">Calificar</button>
+            <a class="button button-quiet"
+               href="{% url 'reputation:sales_to_rate' %}">Ahora no</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

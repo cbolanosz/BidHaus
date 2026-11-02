@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "auctions",
     "escrow",
     "analytics",
+    "reputation",
 ]
 
 MIDDLEWARE = [
@@ -61,6 +62,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "escrow.context_processors.what_the_buyer_still_has_to_do",
+                "reputation.context_processors.sales_waiting_to_be_rated",
             ],
         },
     },

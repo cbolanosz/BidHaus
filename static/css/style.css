@@ -558,11 +558,81 @@ label:has(input[type="checkbox"]:checked) {
     background: rgba(27, 59, 212, 0.05);
 }
 
-/* Django wraps each option in a div of its own; they stack as a list. */
-.field > div:has(input[type="radio"]),
+/* Django wraps each option in a div of its own; they stack as a list. The
+ * stars below are the one group that is not read as a list of options. */
+.field > div:has(input[type="radio"]):not(.stars),
 .field > div:has(input[type="checkbox"]) {
     display: grid;
     gap: 0.5rem;
+}
+
+/* Text that only a screen reader needs. */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* Five stars that fill up to the one under the cursor (FR24). Drawn in reverse
+ * so that each star can colour the ones before it: a sibling selector only
+ * reaches forward. The radios are still there, for the keyboard. */
+.stars {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 0.2rem;
+}
+
+.stars input[type="radio"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    opacity: 0;
+}
+
+.stars label {
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--line);
+    font-size: 2.3rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 0.12s ease, transform 0.12s ease;
+}
+
+.stars label::before {
+    content: "\2605";
+}
+
+/* What was chosen: that star and every one before it. */
+.stars input[type="radio"]:checked ~ label {
+    color: var(--amber);
+}
+
+/* While the row is hovered the cursor decides, not what was chosen. */
+.stars:hover input[type="radio"]:checked ~ label {
+    color: var(--line);
+}
+
+.stars:hover label:hover,
+.stars:hover label:hover ~ label {
+    color: var(--amber);
+}
+
+.stars label:hover {
+    transform: scale(1.1);
+}
+
+.stars input[type="radio"]:focus-visible + label {
+    border-radius: 4px;
+    outline: 2px solid var(--cobalt);
+    outline-offset: 3px;
 }
 
 /* A group of choices carries a legend instead of a label. */
@@ -1021,6 +1091,28 @@ input[type="file"]::file-selector-button {
 .facts dd {
     margin: 0;
     text-align: right;
+}
+
+/* What the two sides of past sales said about this seller (FR24). It sits
+ * beside the verified badge because both answer the same question. */
+.rating {
+    display: inline-flex;
+    gap: 0.25rem;
+    align-items: center;
+    margin-left: 0.35rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.rating-stars {
+    color: var(--amber);
+}
+
+/* How many scores the average rests on: quieter than the figure itself, but
+ * there, because one of them alone says very little. */
+.rating-count {
+    color: var(--ink-2);
+    font-weight: 400;
 }
 
 /* The identity of the seller is one of the two promises of the site, so the

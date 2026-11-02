@@ -67,10 +67,38 @@ class AuctionQuerySet(models.QuerySet):
             return self
         return self.filter(current_price__lte=maximum_price)
 
+    def from_sellers_rated_at_least(self, score):
+        """Keep the lots whose seller averages at least that score (FR03).
+
+        A seller nobody has rated yet has no average, so asking for four stars
+        or more leaves them out: the filter is about sellers who already earned
+        a figure, not about punishing the ones who have none.
+        """
+        if score is None:
+            return self
+        return self.with_seller_rating().filter(seller_rating__gte=score)
+
+    def with_seller_rating(self):
+        """Carry the average the seller has received, and how many it rests on.
+
+        The count travels with the average because one of them alone misleads:
+        a single angry buyer and twenty of them read the same otherwise.
+
+        The scores live in the reputation app, which this one does not import:
+        they are reached through the user, the same way the trust score of an
+        auction is reached through its own relation. Both figures come from the
+        same join, so asking for the two of them costs no extra row.
+        """
+        return self.annotate(
+            seller_rating=models.Avg("seller__ratings_received__score"),
+            seller_rating_count=models.Count("seller__ratings_received"),
+        )
+
     def for_catalogue(self):
         """Fetch in advance everything a catalogue card shows, to avoid N+1 queries."""
         return (
-            self.select_related("seller", "category", "trust_score")
+            self.with_seller_rating()
+            .select_related("seller", "category", "trust_score")
             .prefetch_related("photographs")
         )
 
