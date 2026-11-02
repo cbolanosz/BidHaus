@@ -90,6 +90,7 @@ BidHaus
 │  │  ├─ 0003_bid.py
 │  │  ├─ 0004_auction_winning_bid.py
 │  │  ├─ 0005_auction_resolved_at_auction_resolved_by_and_more.py
+│  │  ├─ 0006_bid_bidder_time_idx.py
 │  │  └─ __init__.py
 │  ├─ templatetags
 │  │  ├─ __init__.py
@@ -297,6 +298,7 @@ Quit the server with CONTROL-C.
 | `/` | Catalogue of open auctions, with search by text, category, condition and price range | FR03 |
 | `/auctions/new/` | Publish an auction with its first photographs | FR01, FR02 |
 | `/auctions/mine/` | Lists the seller's own auctions, including pending requests | FR12 |
+| `/bids/mine/` | Lists the authenticated user's own bids, newest first and paginated | FR13 |
 | `/auctions/mine/<id>/` | Private detail for the owner, including pending and rejected requests | FR12, FR36 |
 | `/auctions/<id>/` | Auction detail: photographs, current price, countdown, bid form and full bid history | FR04 |
 | `/auctions/<id>/bid/` | Registers a bid submitted from the detail page | FR05, FR06 |
@@ -313,6 +315,12 @@ Quit the server with CONTROL-C.
 The tests use a **file-based** SQLite database (`test_db.sqlite3`) instead of the in-memory
 default, because WAL mode and the lock timeout that the bidding service relies on only exist
 on a real file.
+
+The own-bids page loads each auction together with its bid and uses a bidder/time index,
+so pagination does not issue one query per bid. Concurrent bid registration keeps SQLite's
+transactional price check and serializes writers in the application process, allowing the
+20-bid performance requirement to be measured independently of account setup and password
+hashing.
 
 To run a single module:
 
