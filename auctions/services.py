@@ -241,6 +241,11 @@ def list_bids(auction):
     return auction.bids.select_related("bidder")
 
 
+def list_bids_by_bidder(bidder):
+    """Return one user's bids, newest first, with their auctions loaded (FR13)."""
+    return Bid.objects.for_bidder_list(bidder)
+
+
 def place_bid(auction_id, bidder, amount):
     """Register a bid on an open auction and update its current price (FR05).
 

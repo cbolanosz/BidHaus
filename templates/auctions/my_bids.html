@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load humanize auction_formats %}
+
+{% block title %}Mis pujas — BidHaus{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <p class="eyebrow">Tu cuenta</p>
+    <h1>Mis pujas</h1>
+    <p class="hero-lede">
+        {% if bids %}
+            Estas son tus pujas, de la más reciente a la más antigua.
+        {% else %}
+            Todavía no has realizado ninguna puja.
+        {% endif %}
+    </p>
+</section>
+
+{% if bids %}
+    <ol class="rungs">
+        {% for bid in bids %}
+            <li class="rung">
+                <p class="amount money">$ {{ bid.amount|floatformat:0|intcomma }}<small>COP</small></p>
+                <p class="who">
+                    <a href="{% url 'auctions:auction_detail' bid.auction.pk %}">
+                        {{ bid.auction.title }}
+                    </a>
+                </p>
+                <p class="when">{{ bid.timestamp|date:"d/m/Y H:i" }}</p>
+            </li>
+        {% endfor %}
+    </ol>
+
+    {% if bids.has_other_pages %}
+        <nav class="pagination" aria-label="Paginación de mis pujas">
+            {% if bids.has_previous %}
+                <a href="?page={{ bids.previous_page_number }}">Anterior</a>
+            {% endif %}
+            <span>Página {{ bids.number }} de {{ bids.paginator.num_pages }}</span>
+            {% if bids.has_next %}
+                <a href="?page={{ bids.next_page_number }}">Siguiente</a>
+            {% endif %}
+        </nav>
+    {% endif %}
+{% else %}
+    <div class="empty">
+        <p class="empty-title">Aún no has realizado ninguna puja</p>
+        <p>Cuando pujes por un lote, aparecerá aquí junto con la subasta correspondiente.</p>
+        <p><a href="{% url 'auctions:catalogue' %}">Explorar subastas</a></p>
+    </div>
+{% endif %}
+{% endblock %}
