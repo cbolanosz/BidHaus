@@ -168,6 +168,12 @@ EMAIL_TIMEOUT = int(os.environ.get("BIDHAUS_EMAIL_TIMEOUT", "10"))
 # itself is the sensible default rather than an address nobody owns.
 DEFAULT_FROM_EMAIL = os.environ.get("BIDHAUS_DEFAULT_FROM_EMAIL") or EMAIL_HOST_USER
 
+# How long a password recovery link stays valid (FR33). Django's own default is
+# three days, which is a long time for a link that opens an account; an hour is
+# enough to read an email and still narrow the window if the mailbox is read by
+# somebody else.
+PASSWORD_RESET_TIMEOUT = int(os.environ.get("BIDHAUS_PASSWORD_RESET_TIMEOUT", 60 * 60))
+
 # Where this installation answers from. An email is read outside the browser
 # that opened the site, so the links it carries have to be absolute.
 SITE_URL = os.environ.get("BIDHAUS_SITE_URL", "http://127.0.0.1:8000")

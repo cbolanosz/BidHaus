@@ -3,7 +3,8 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from accounts.services import register_visitor
+from accounts.exceptions import InvalidCredentials
+from accounts.services import authenticate_user, register_visitor
 
 PASSWORD = "subasta-seguro-2026"
 
@@ -65,3 +66,34 @@ class LogInViewTests(TestCase):
         response = self.post(next="https://example.com/robo")
 
         self.assertRedirects(response, reverse("auctions:catalogue"))
+
+
+class TheAddressIsReadWithoutRegardToCaseTests(TestCase):
+    """Sign-up already treats two spellings as one mailbox; so must logging in."""
+
+    def setUp(self):
+        self.user = register_visitor(
+            email="laura@bidhaus.co", full_name="Laura Gómez", password=PASSWORD
+        )
+
+    def test_the_stored_spelling_works(self):
+        self.assertIsNotNone(authenticate_user(self.user.email, PASSWORD))
+
+    def test_another_spelling_of_the_same_address_works_too(self):
+        self.assertIsNotNone(authenticate_user("Laura@BidHaus.CO", PASSWORD))
+
+    def test_the_form_lets_that_spelling_in(self):
+        response = self.client.post(
+            reverse("accounts:log_in"),
+            {"email": "LAURA@bidhaus.co", "password": PASSWORD},
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+    def test_a_wrong_password_still_fails_whatever_the_spelling(self):
+        with self.assertRaises(InvalidCredentials):
+            authenticate_user("Laura@BidHaus.CO", "otra cosa")
+
+    def test_an_address_that_belongs_to_nobody_still_fails(self):
+        with self.assertRaises(InvalidCredentials):
+            authenticate_user("NADIE@bidhaus.co", PASSWORD)

@@ -2,7 +2,7 @@
 
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import SetPasswordForm, UserCreationForm
 
 from accounts.models import VerificationRequest
 from accounts.validators import DOCUMENT_EXTENSIONS, MAX_DOCUMENT_SIZE_MB
@@ -56,3 +56,22 @@ class VerificationRequestForm(forms.ModelForm):
             f"de máximo {MAX_DOCUMENT_SIZE_MB} MB. "
             "Se elimina en cuanto se resuelve la solicitud."
         )
+
+
+class PasswordResetRequestForm(forms.Form):
+    """The address a user who forgot their password types (FR33)."""
+
+    email = forms.EmailField(
+        label="Correo electrónico",
+        help_text="Te enviamos un enlace para elegir una contraseña nueva.",
+    )
+
+
+class SetNewPasswordForm(SetPasswordForm):
+    """The new password chosen from a recovery link (FR33).
+
+    Django's own form is extended instead of rewritten: it asks for the
+    password twice, refuses the two if they differ, and runs the accepted one
+    through AUTH_PASSWORD_VALIDATORS, which is the same gate sign-up uses.
+    Its save() is never called, because a form validates and a service stores.
+    """

@@ -8,6 +8,17 @@ class UserManager(BaseUserManager):
 
     use_in_migrations = True
 
+    def get_by_natural_key(self, email):
+        """Find the account by email, without regard to case.
+
+        Django's authentication asks the manager for the account before
+        checking the password, so overriding this one method is what makes
+        every way in agree: signing up already treats two addresses that
+        differ only in capitalisation as the same mailbox, and refuses to
+        register the second. Logging in has to read them the same way.
+        """
+        return self.get(**{f"{self.model.USERNAME_FIELD}__iexact": email})
+
     def create_user(self, email, password=None, **extra_fields):
         """Create a regular user with a normalised email and a hashed password."""
         if not email:

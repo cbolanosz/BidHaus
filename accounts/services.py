@@ -1,8 +1,11 @@
 """Use cases of the accounts app. Views call these; they never touch the ORM."""
 
 from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth.tokens import default_token_generator
 from django.db import transaction
 from django.utils import timezone
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
 from accounts.exceptions import (
     AlreadyVerified,
@@ -13,11 +16,74 @@ from accounts.exceptions import (
     VerificationAlreadyResolved,
 )
 from accounts.models import VerificationRequest
+from accounts.notifications import send_password_reset_link
 
 User = get_user_model()
 
 
 @transaction.atomic
+def request_password_reset(email):
+    """Send a recovery link to that address, if it belongs to an account (FR33).
+
+    It answers the same whether or not the address is registered, and that is
+    the caller's job to honour: saying «no account here» would turn this form
+    into a way of finding out who has one.
+
+    An account with no usable password is skipped. There is nothing to recover
+    and the token would be derived from a hash that is not one.
+    """
+    user = User.objects.filter(email__iexact=email).first()
+    if user is None or not user.has_usable_password():
+        return None
+
+    uidb64, token = password_reset_credentials(user)
+    send_password_reset_link(user, uidb64, token)
+    return user
+
+
+def password_reset_credentials(user):
+    """The two pieces a recovery link carries: who it is for, and its token.
+
+    The token is Django's own, derived from the stored password hash and the
+    last login. That is what makes the link single use: changing the password
+    changes the hash, and every link derived from the old one stops matching.
+    """
+    return (
+        urlsafe_base64_encode(force_bytes(user.pk)),
+        default_token_generator.make_token(user),
+    )
+
+
+def find_user_for_password_reset(uidb64, token):
+    """Return the account a recovery link opens, or None if it no longer does.
+
+    None covers every way a link can fail: a address that was tampered with, an
+    account that no longer exists, a token already spent and a token too old.
+    The caller treats them alike, because telling them apart would only help
+    somebody who is guessing.
+    """
+    try:
+        user = User.objects.get(pk=urlsafe_base64_decode(uidb64).decode())
+    except (User.DoesNotExist, ValueError, TypeError, OverflowError):
+        return None
+
+    if not default_token_generator.check_token(user, token):
+        return None
+    return user
+
+
+@transaction.atomic
+def reset_password(user, password):
+    """Store the new password of an account (FR33).
+
+    Storing it goes through set_password, so it is hashed with the algorithm
+    the project declares and never written as it was typed (NFR1).
+    """
+    user.set_password(password)
+    user.save(update_fields=["password"])
+    return user
+
+
 def register_visitor(email, full_name, password):
     """Create the account a visitor needs before placing a bid (FR30).
 

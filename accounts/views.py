@@ -16,14 +16,23 @@ from accounts.exceptions import (
     InvalidCredentials,
     VerificationAlreadyPending,
 )
-from accounts.forms import LoginForm, SignUpForm, VerificationRequestForm
+from accounts.forms import (
+    LoginForm,
+    PasswordResetRequestForm,
+    SetNewPasswordForm,
+    SignUpForm,
+    VerificationRequestForm,
+)
 from accounts.models import VerificationRequest
 from accounts.services import (
     authenticate_user,
+    find_user_for_password_reset,
     find_pending_verification_request,
     find_verification_request,
     list_verification_requests,
     register_visitor,
+    request_password_reset,
+    reset_password,
     submit_verification_request,
 )
 
@@ -51,6 +60,58 @@ def sign_up(request):
 
     messages.success(request, f"Se creó la cuenta de {user.full_name}.")
     return redirect("auctions:catalogue")
+
+
+def password_reset_request(request):
+    """Receive an address and send the recovery link to it (FR33)."""
+    if request.method != "POST":
+        return render(
+            request,
+            "accounts/password_reset_request.html",
+            {"form": PasswordResetRequestForm()},
+        )
+
+    form = PasswordResetRequestForm(request.POST)
+    if not form.is_valid():
+        return render(request, "accounts/password_reset_request.html", {"form": form})
+
+    request_password_reset(form.cleaned_data["email"])
+
+    # The same page whatever the service found. Whether an address belongs to
+    # an account of this site is not something a form should hand out.
+    return render(
+        request,
+        "accounts/password_reset_sent.html",
+        {"email": form.cleaned_data["email"]},
+    )
+
+
+def password_reset_confirm(request, uidb64, token):
+    """Let the owner of a valid recovery link choose a new password (FR33)."""
+    user = find_user_for_password_reset(uidb64, token)
+    if user is None:
+        return render(
+            request, "accounts/password_reset_confirm.html", {"link_is_valid": False}
+        )
+
+    if request.method != "POST":
+        return _render_new_password_page(request, SetNewPasswordForm(user))
+
+    form = SetNewPasswordForm(user, request.POST)
+    if not form.is_valid():
+        return _render_new_password_page(request, form)
+
+    reset_password(user, form.cleaned_data["new_password1"])
+    messages.success(request, "Tu contraseña cambió. Ya puedes entrar con ella.")
+    return redirect("accounts:log_in")
+
+
+def _render_new_password_page(request, form):
+    return render(
+        request,
+        "accounts/password_reset_confirm.html",
+        {"form": form, "link_is_valid": True},
+    )
 
 
 def log_in(request):

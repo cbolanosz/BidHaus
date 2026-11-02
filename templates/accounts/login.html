@@ -37,6 +37,10 @@
             <button class="button" type="submit">Entrar</button>
             <a class="button-quiet" href="{% url 'accounts:sign_up' %}">Crear una cuenta</a>
         </div>
+
+        <p class="help">
+            <a href="{% url 'accounts:password_reset_request' %}">Olvidé mi contraseña</a>
+        </p>
     </form>
 </div>
 {% endblock %}

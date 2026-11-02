@@ -68,3 +68,38 @@ class VerificationAdminActionTests(DocumentStoringTestCase):
         response = self.client.get(change_url)
 
         self.assertNotContains(response, 'name="state"')
+
+
+class WhatTheRequestPageShowsTests(DocumentStoringTestCase):
+    """The document has no public address, so the page must not offer one."""
+
+    def setUp(self):
+        self.administrator = create_administrator()
+        self.administrator.is_staff = True
+        self.administrator.is_superuser = True
+        self.administrator.save(update_fields=["is_staff", "is_superuser"])
+        self.request = submit_verification_request(
+            seller=create_account(role=User.Role.SELLER),
+            identity_document=build_document(),
+        )
+        self.client.force_login(self.administrator)
+        self.url = reverse(
+            "admin:accounts_verificationrequest_change", args=[self.request.pk]
+        )
+
+    def test_links_through_the_view_that_checks_the_role(self):
+        response = self.client.get(self.url)
+
+        self.assertContains(
+            response, reverse("accounts:identity_document", args=[self.request.pk])
+        )
+
+    def test_does_not_link_the_file_where_nothing_serves_it(self):
+        response = self.client.get(self.url)
+
+        self.assertNotContains(response, "/media/verification/")
+
+    def test_does_not_offer_to_replace_the_document(self):
+        response = self.client.get(self.url)
+
+        self.assertNotContains(response, 'name="identity_document"')

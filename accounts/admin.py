@@ -46,15 +46,20 @@ class VerificationRequestAdmin(admin.ModelAdmin):
 
     # The decision is taken with the two actions, never by editing the row: a
     # state written by hand would not grant the role nor delete the document.
-    readonly_fields = [
+    #
+    # The file field itself is left out of the page. Shown, Django links it
+    # through MEDIA_URL, where the document is deliberately not served: the
+    # link looks right and reaches nothing. What is shown is document_link,
+    # which points at the view that checks the role first (DBR08).
+    fields = [
         "seller",
-        "identity_document",
+        "document_link",
         "state",
         "submitted_at",
         "resolved_by",
         "resolved_at",
-        "document_link",
     ]
+    readonly_fields = fields
 
     @admin.display(description="documento")
     def document_link(self, verification_request):
