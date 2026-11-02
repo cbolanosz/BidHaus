@@ -60,7 +60,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "escrow.context_processors.payments_awaiting_confirmation",
+                "escrow.context_processors.what_the_buyer_still_has_to_do",
             ],
         },
     },
@@ -122,6 +122,12 @@ MEDIA_ROOT = BASE_DIR / "media"
 # them by URL. Only an administrator reads them, through a view (DBR08).
 IDENTITY_DOCUMENT_ROOT = os.environ.get(
     "BIDHAUS_IDENTITY_DOCUMENT_ROOT", BASE_DIR / "private-media"
+)
+
+# Evidence of a dispute is not public either: it belongs to the two sides of
+# the sale and to whoever arbitrates it, so it is served by a view (DBR07).
+DISPUTE_EVIDENCE_ROOT = os.environ.get(
+    "BIDHAUS_DISPUTE_EVIDENCE_ROOT", BASE_DIR / "private-media"
 )
 
 # The mail service BidHaus hands its notifications to (FR09, FR10, FR11).

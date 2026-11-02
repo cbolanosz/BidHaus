@@ -9,7 +9,12 @@ from auctions.tests.factories import create_bidder, create_seller
 from escrow.commission import calculate_commission
 from escrow.exceptions import TransactionIsNotHeld
 from escrow.models import EscrowTransaction
-from escrow.services import confirm_reception, hold_payment, release_funds
+from escrow.services import (
+    confirm_reception,
+    hold_payment,
+    open_dispute,
+    release_funds,
+)
 from escrow.tests.factories import create_closed_auction
 
 
@@ -171,3 +176,29 @@ class TheBreakdownIsOnThePageTests(TestCase):
         response = self.client.get(self.url)
 
         self.assertContains(response, "Recibió el vendedor")
+
+
+class WhatTheFiguresSayWhileItIsArguedTests(TestCase):
+    """A sale in dispute has paid nobody yet, and must not read as if it had."""
+
+    def setUp(self):
+        self.buyer = create_bidder()
+        self.auction = create_closed_auction(amount="400000", bidder=self.buyer)
+        self.transaction = hold_payment(self.auction)
+        open_dispute(self.transaction, self.buyer, "No es lo que se publicó.")
+        self.transaction.refresh_from_db()
+
+    def test_still_projects_the_commission_instead_of_reporting_zero(self):
+        self.assertEqual(self.transaction.commission, Decimal("0.00"))
+        self.assertEqual(
+            self.transaction.commission_due, calculate_commission(self.transaction.amount)
+        )
+
+    def test_the_payout_discounts_that_projection(self):
+        self.assertEqual(
+            self.transaction.payout,
+            self.transaction.amount - calculate_commission(self.transaction.amount),
+        )
+
+    def test_the_sale_is_not_settled_yet(self):
+        self.assertFalse(self.transaction.is_settled)

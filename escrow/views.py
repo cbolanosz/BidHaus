@@ -4,21 +4,29 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.http import Http404
+from django.http import FileResponse, Http404
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
 from escrow.exceptions import (
+    DisputeIsResolved,
+    NoEvidence,
     NotAParticipant,
     NotTheBuyer,
+    TooManyEvidenceFiles,
     TransactionIsNotHeld,
 )
-from escrow.forms import DisputeForm
-from escrow.models import EscrowTransaction
+from escrow.forms import DisputeForm, EvidenceUploadForm
+from escrow.models import MAX_EVIDENCE_FILES, Dispute, EscrowTransaction, Evidence
 from escrow.services import (
     assert_may_read,
+    attach_evidence,
     confirm_reception,
+    count_free_evidence_slots,
+    find_dispute_by_id,
+    find_evidence,
     find_transaction,
+    list_evidence,
     list_state_changes,
     open_dispute,
 )
@@ -31,6 +39,7 @@ def transaction_detail(request, transaction_id):
     """Show the state of the money of a sale and its history (FR15, UR03)."""
     escrow_transaction = _find_transaction_or_404(transaction_id)
     _assert_may_read_or_403(escrow_transaction, request.user)
+    dispute = getattr(escrow_transaction, "dispute", None)
 
     return render(
         request,
@@ -40,7 +49,8 @@ def transaction_detail(request, transaction_id):
             "state_changes": list_state_changes(escrow_transaction),
             "may_confirm": _may_confirm(escrow_transaction, request.user),
             "shows_breakdown": _shows_breakdown(escrow_transaction, request.user),
-            "dispute": getattr(escrow_transaction, "dispute", None),
+            "dispute": dispute,
+            "evidence": list_evidence(dispute) if dispute else [],
         },
     )
 
@@ -101,6 +111,78 @@ def transaction_open_dispute(request, transaction_id):
         "Abrimos la disputa. El pago queda retenido hasta que un administrador decida.",
     )
     return redirect("escrow:transaction_detail", transaction_id=escrow_transaction.pk)
+
+
+@login_required
+def dispute_evidence(request, dispute_id):
+    """Show the evidence of a dispute and receive new files (FR18)."""
+    dispute = _find_dispute_or_404(dispute_id)
+    if dispute.opened_by_id != request.user.id:
+        raise PermissionDenied("Solo quien abrió la disputa puede adjuntar pruebas.")
+
+    if request.method != "POST":
+        return _render_evidence_page(request, dispute, EvidenceUploadForm())
+
+    form = EvidenceUploadForm(request.POST, request.FILES)
+    if not form.is_valid():
+        return _render_evidence_page(request, dispute, form)
+
+    try:
+        attached = attach_evidence(dispute, request.user, form.cleaned_data["files"])
+    except DisputeIsResolved:
+        form.add_error(None, "Esta disputa ya se resolvió: no admite más pruebas.")
+        return _render_evidence_page(request, dispute, form)
+    except NoEvidence:
+        form.add_error("files", "Elige al menos un archivo para adjuntarlo.")
+        return _render_evidence_page(request, dispute, form)
+    except TooManyEvidenceFiles as error:
+        form.add_error(
+            "files",
+            f"Solo caben {error.remaining_slots} archivos más: "
+            f"una disputa admite {MAX_EVIDENCE_FILES} en total.",
+        )
+        return _render_evidence_page(request, dispute, form)
+
+    messages.success(request, f"Se adjuntaron {len(attached)} archivos.")
+    return redirect("escrow:dispute_evidence", dispute_id=dispute.pk)
+
+
+@login_required
+def evidence_file(request, evidence_id):
+    """Serve a file of a dispute to the two sides of the sale and an administrator.
+
+    Evidence is stored outside MEDIA_ROOT precisely so that no address reaches
+    it without passing through this check first (DBR07).
+    """
+    try:
+        evidence = find_evidence(evidence_id)
+    except Evidence.DoesNotExist:
+        raise Http404("La prueba no existe.")
+
+    _assert_may_read_or_403(evidence.dispute.transaction, request.user)
+    return FileResponse(evidence.file.open("rb"), filename=evidence.filename)
+
+
+def _render_evidence_page(request, dispute, form):
+    """Render the evidence page with the state the buyer needs to see."""
+    return render(
+        request,
+        "escrow/evidence_form.html",
+        {
+            "dispute": dispute,
+            "transaction": dispute.transaction,
+            "evidence": list_evidence(dispute),
+            "free_slots": count_free_evidence_slots(dispute),
+            "form": form,
+        },
+    )
+
+
+def _find_dispute_or_404(dispute_id):
+    try:
+        return find_dispute_by_id(dispute_id)
+    except Dispute.DoesNotExist:
+        raise Http404("La disputa no existe.")
 
 
 def _render_dispute_page(request, escrow_transaction, form):

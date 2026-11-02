@@ -7,12 +7,21 @@ from escrow.commission import calculate_commission
 from escrow.exceptions import (
     AuctionHasNoWinner,
     AuctionIsNotClosed,
+    DisputeIsResolved,
+    NoEvidence,
     NotAParticipant,
     NotTheBuyer,
+    TooManyEvidenceFiles,
     TransactionAlreadyExists,
     TransactionIsNotHeld,
 )
-from escrow.models import Dispute, EscrowTransaction, StateChange
+from escrow.models import (
+    MAX_EVIDENCE_FILES,
+    Dispute,
+    EscrowTransaction,
+    Evidence,
+    StateChange,
+)
 
 User = get_user_model()
 
@@ -129,6 +138,56 @@ def find_dispute(escrow_transaction):
     return Dispute.objects.filter(transaction=escrow_transaction).first()
 
 
+@transaction.atomic
+def attach_evidence(dispute, buyer, files):
+    """Attach the files the buyer offers as proof of their claim (FR18).
+
+    Only the buyer who opened it, and only while it is still open: once an
+    administrator has decided, the file would arrive after the decision it was
+    meant to inform.
+    """
+    if dispute.opened_by_id != buyer.id:
+        raise NotTheBuyer
+    if not dispute.is_open:
+        raise DisputeIsResolved
+    if not files:
+        raise NoEvidence
+
+    free_slots = count_free_evidence_slots(dispute)
+    if len(files) > free_slots:
+        raise TooManyEvidenceFiles(free_slots)
+
+    attached = []
+    for uploaded_file in files:
+        evidence = Evidence(dispute=dispute, file=uploaded_file)
+        evidence.full_clean()
+        evidence.save()
+        attached.append(evidence)
+    return attached
+
+
+def count_free_evidence_slots(dispute):
+    """How many files the dispute still admits, of MAX_EVIDENCE_FILES."""
+    return MAX_EVIDENCE_FILES - dispute.evidence.count()
+
+
+def list_evidence(dispute):
+    """Return the files attached to the dispute, oldest first."""
+    return dispute.evidence.all()
+
+
+def find_dispute_by_id(dispute_id):
+    """Return that dispute, or raise Dispute.DoesNotExist."""
+    return Dispute.objects.select_related(
+        "transaction__auction", "transaction__buyer", "transaction__seller", "opened_by"
+    ).get(pk=dispute_id)
+
+
+def find_evidence(evidence_id):
+    """Return that piece of evidence, or raise Evidence.DoesNotExist."""
+    return Evidence.objects.select_related("dispute__transaction").get(pk=evidence_id)
+
+
 def find_transaction(transaction_id):
     """Return that transaction, or raise EscrowTransaction.DoesNotExist."""
     return EscrowTransaction.objects.select_related(
@@ -146,6 +205,20 @@ def assert_may_read(escrow_transaction, user):
     is_administrator = user.role == User.Role.ADMINISTRATOR
     if not (is_participant or is_administrator):
         raise NotAParticipant
+
+
+def list_open_disputes_of(buyer):
+    """Return the claims this buyer still has open, oldest first (FR17, FR18).
+
+    A payment leaves the list above the moment it is argued, so without this
+    the buyer would lose the way back to their own claim and could not attach
+    anything more to it.
+    """
+    return (
+        Dispute.objects.filter(opened_by=buyer, state=Dispute.State.OPEN)
+        .select_related("transaction__auction")
+        .order_by("opened_at")
+    )
 
 
 def list_payments_awaiting_confirmation(buyer):

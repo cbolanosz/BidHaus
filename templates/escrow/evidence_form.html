@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Pruebas de la disputa — BidHaus{% endblock %}
+
+{% block content %}
+<div class="lot-head">
+    <span class="eyebrow">Lote {{ transaction.auction.pk|stringformat:"03d" }}</span>
+    <h1>Pruebas de la disputa</h1>
+    <p class="lede">
+        Adjunta lo que respalde tu reclamo: fotografías de lo que llegó, la guía de envío,
+        capturas de lo que acordaron. Las ve el vendedor y el administrador que decide.
+    </p>
+</div>
+
+<div class="panel">
+    <h2>Lo que ya adjuntaste</h2>
+    {% if evidence %}
+        <ol class="request-log">
+            {% for item in evidence %}
+                <li>
+                    <a href="{% url 'escrow:evidence_file' item.pk %}">{{ item.filename }}</a>
+                    <span class="when">{{ item.attached_at|date:"d/m/Y H:i" }}</span>
+                </li>
+            {% endfor %}
+        </ol>
+    {% else %}
+        <p class="help">Todavía no has adjuntado nada.</p>
+    {% endif %}
+</div>
+
+{% if free_slots %}
+    <div class="panel">
+        <h2>Adjuntar más</h2>
+        <p class="help">Te {{ free_slots|pluralize:"queda,quedan" }} {{ free_slots }} archivo{{ free_slots|pluralize }}.</p>
+        <form method="post" enctype="multipart/form-data" class="form" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <ul class="errors">
+                    {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+            {% endif %}
+
+            {% for field in form %}
+                <div class="field">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+                    {% if field.errors %}
+                        <ul class="errors">
+                            {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <div class="form-actions">
+                <button class="button" type="submit">Adjuntar</button>
+                <a class="button button-quiet"
+                   href="{% url 'escrow:transaction_detail' transaction.pk %}">Volver al pago</a>
+            </div>
+        </form>
+    </div>
+{% else %}
+    <div class="panel">
+        <p class="help">
+            Ya adjuntaste el máximo de archivos que admite una disputa.
+            <a href="{% url 'escrow:transaction_detail' transaction.pk %}">Volver al pago</a>
+        </p>
+    </div>
+{% endif %}
+{% endblock %}

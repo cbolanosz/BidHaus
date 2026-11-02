@@ -1,12 +1,18 @@
 """The money a closed auction holds until the buyer confirms (DBR05, DBR06)."""
 
 from django.conf import settings
+from django.core.files.storage import FileSystemStorage
+from django.core.validators import FileExtensionValidator
 from django.db import models
 
 from escrow.commission import calculate_commission
 from escrow.exceptions import StateChangeIsImmutable
+from escrow.validators import EVIDENCE_EXTENSIONS, validate_evidence_size
 
 NO_COMMISSION = 0
+
+# What a buyer may attach to a single dispute (DBR07).
+MAX_EVIDENCE_FILES = 5
 
 
 class EscrowTransaction(models.Model):
@@ -63,17 +69,22 @@ class EscrowTransaction(models.Model):
         return self.state == self.State.HELD
 
     @property
+    def is_settled(self):
+        """Whether the money already moved for good, one way or the other."""
+        return self.state in (self.State.RELEASED, self.State.REFUNDED)
+
+    @property
     def commission_due(self):
         """The commission of this sale: the one charged, or the one it will carry.
 
-        While the money is retained nothing has been deducted yet, so the figure
-        shown is what the current percentage would take. Once released, it is
-        the amount actually kept, which never changes again even if the
-        percentage of the platform does.
+        Until the money moves nothing has been deducted, so the figure shown is
+        what the current percentage would take — that holds while it waits and
+        while it is argued. Once settled it is the amount actually kept, which
+        never changes again even if the percentage of the platform does.
         """
-        if self.is_held:
-            return calculate_commission(self.amount)
-        return self.commission
+        if self.is_settled:
+            return self.commission
+        return calculate_commission(self.amount)
 
     @property
     def payout(self):
@@ -183,3 +194,55 @@ class Dispute(models.Model):
     def is_open(self):
         """Whether the claim is still waiting for an administrator (FR19)."""
         return self.state == self.State.OPEN
+
+
+def evidence_storage():
+    """Store evidence outside MEDIA_ROOT, where no URL reaches it.
+
+    A callable, not an instance, so the migration records this function by name
+    instead of freezing one machine's absolute path into the repository.
+    """
+    return FileSystemStorage(location=settings.DISPUTE_EVIDENCE_ROOT)
+
+
+def evidence_path(evidence, filename):
+    """Keep the files of each dispute inside their own folder."""
+    return f"disputes/{evidence.dispute_id}/{filename}"
+
+
+class Evidence(models.Model):
+    """A file the buyer attaches to back their claim (DBR07).
+
+    Up to MAX_EVIDENCE_FILES per dispute, and readable only by the two sides of
+    the sale and an administrator, which is why it never lives under MEDIA_ROOT.
+    """
+
+    dispute = models.ForeignKey(
+        Dispute,
+        on_delete=models.CASCADE,
+        related_name="evidence",
+        verbose_name="disputa",
+    )
+    file = models.FileField(
+        "archivo",
+        storage=evidence_storage,
+        upload_to=evidence_path,
+        validators=[
+            FileExtensionValidator(EVIDENCE_EXTENSIONS),
+            validate_evidence_size,
+        ],
+    )
+    attached_at = models.DateTimeField("fecha de adjunto", auto_now_add=True)
+
+    class Meta:
+        ordering = ["attached_at"]
+        verbose_name = "prueba"
+        verbose_name_plural = "pruebas"
+
+    def __str__(self):
+        return self.filename
+
+    @property
+    def filename(self):
+        """The name of the file without the folders it is stored under."""
+        return self.file.name.rsplit("/", 1)[-1]

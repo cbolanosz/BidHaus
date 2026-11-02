@@ -22,4 +22,14 @@ urlpatterns = [
         views.transaction_open_dispute,
         name="transaction_open_dispute",
     ),
+    path(
+        "disputes/<int:dispute_id>/evidence/",
+        views.dispute_evidence,
+        name="dispute_evidence",
+    ),
+    path(
+        "evidence/<int:evidence_id>/",
+        views.evidence_file,
+        name="evidence_file",
+    ),
 ]

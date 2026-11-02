@@ -37,6 +37,15 @@
                             </a>
                             <span class="capsule-rule" aria-hidden="true"></span>
                         {% endif %}
+                        {% if next_open_dispute %}
+                            <a class="capsule-cell"
+                               href="{% url 'escrow:dispute_evidence' next_open_dispute.pk %}"
+                               title="{{ open_disputes }} disputa{{ open_disputes|pluralize }} abierta{{ open_disputes|pluralize }}">
+                                <span class="capsule-count">{{ open_disputes }}</span>
+                                <span class="capsule-words">en disputa</span>
+                            </a>
+                            <span class="capsule-rule" aria-hidden="true"></span>
+                        {% endif %}
                         {% if not user.is_verified %}
                             <a class="capsule-cell" href="{% url 'accounts:verification_request' %}">Verifica tu identidad</a>
                             <span class="capsule-rule" aria-hidden="true"></span>

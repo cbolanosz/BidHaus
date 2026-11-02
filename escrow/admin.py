@@ -2,7 +2,7 @@
 
 from django.contrib import admin
 
-from escrow.models import Dispute, EscrowTransaction, StateChange
+from escrow.models import Dispute, EscrowTransaction, Evidence, StateChange
 
 
 class StateChangeInline(admin.TabularInline):
@@ -35,6 +35,19 @@ class EscrowTransactionAdmin(admin.ModelAdmin):
         return False
 
 
+class EvidenceInline(admin.TabularInline):
+    """The files the buyer attached, read-only: they are what the claim rests on."""
+
+    model = Evidence
+    extra = 0
+    can_delete = False
+    fields = ["file", "attached_at"]
+    readonly_fields = fields
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(Dispute)
 class DisputeAdmin(admin.ModelAdmin):
     """Reading only: a buyer opens a dispute from the site, never from here."""
@@ -43,6 +56,7 @@ class DisputeAdmin(admin.ModelAdmin):
     list_filter = ["state"]
     search_fields = ["transaction__auction__title", "opened_by__email"]
     readonly_fields = ["transaction", "opened_by", "description", "state", "opened_at"]
+    inlines = [EvidenceInline]
 
     def has_add_permission(self, request):
         return False

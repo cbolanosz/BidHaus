@@ -22,7 +22,7 @@
         {% if shows_breakdown %}
             <dt>Comisión de BidHaus</dt>
             <dd class="money">− $ {{ transaction.commission_due|floatformat:0|intcomma }} COP</dd>
-            <dt>{% if transaction.is_held %}Recibirá{% else %}Recibió{% endif %} el vendedor</dt>
+            <dt>{% if transaction.is_settled %}Recibió{% else %}Recibirá{% endif %} el vendedor</dt>
             <dd class="money payout">$ {{ transaction.payout|floatformat:0|intcomma }} COP</dd>
         {% endif %}
         <dt>Comprador</dt>
@@ -67,6 +67,25 @@
             el {{ dispute.opened_at|date:"d/m/Y H:i" }}.
         </p>
         <blockquote class="quote">{{ dispute.description|linebreaksbr }}</blockquote>
+
+        {% if evidence %}
+            <h3>Pruebas adjuntas</h3>
+            <ol class="request-log">
+                {% for item in evidence %}
+                    <li>
+                        <a href="{% url 'escrow:evidence_file' item.pk %}">{{ item.filename }}</a>
+                        <span class="when">{{ item.attached_at|date:"d/m/Y H:i" }}</span>
+                    </li>
+                {% endfor %}
+            </ol>
+        {% endif %}
+
+        {% if dispute.opened_by_id == user.id and dispute.is_open %}
+            <p class="help">
+                <a href="{% url 'escrow:dispute_evidence' dispute.pk %}">Adjuntar pruebas</a>
+                que respalden tu reclamo.
+            </p>
+        {% endif %}
     </div>
 {% endif %}
 

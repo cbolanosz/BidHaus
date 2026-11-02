@@ -1,7 +1,12 @@
 """Objects the escrow tests need in order to exercise a use case."""
 
+from django.core.files.uploadedfile import SimpleUploadedFile
+
 from auctions.models import Auction
 from auctions.tests.factories import create_auction, create_bid, create_bidder
+
+# The smallest thing that passes as a PDF, so a test never carries a real file.
+PDF_BYTES = b"%PDF-1.4\n%%EOF\n"
 
 
 def create_closed_auction(amount="400000", seller=None, bidder=None):
@@ -24,3 +29,8 @@ def create_closed_auction_without_bids(seller=None):
     auction.state = Auction.State.CLOSED
     auction.save(update_fields=["state"])
     return auction
+
+
+def build_evidence(name="factura.pdf"):
+    """Build a small file that passes as a piece of evidence."""
+    return SimpleUploadedFile(name, PDF_BYTES, content_type="application/pdf")

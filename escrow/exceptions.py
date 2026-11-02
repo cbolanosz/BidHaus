@@ -31,3 +31,19 @@ class NotAParticipant(EscrowError):
 
 class TransactionIsNotHeld(EscrowError):
     """The money of this transaction has already moved: there is nothing to confirm."""
+
+
+class DisputeIsResolved(EscrowError):
+    """A dispute an administrator already decided takes no more evidence (FR18)."""
+
+
+class NoEvidence(EscrowError):
+    """Attaching nothing is not attaching evidence (FR18)."""
+
+
+class TooManyEvidenceFiles(EscrowError):
+    """The upload would push the dispute over the maximum number of files."""
+
+    def __init__(self, remaining_slots):
+        self.remaining_slots = remaining_slots
+        super().__init__(f"Only {remaining_slots} evidence files still fit in this dispute.")
