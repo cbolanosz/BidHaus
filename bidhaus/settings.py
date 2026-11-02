@@ -96,10 +96,28 @@ LOGIN_URL = "accounts:log_in"
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        # Eight characters is the length the OWASP standard asks for (NFR1).
+        "OPTIONS": {"min_length": 8},
+    },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
+
+# How a password is stored (NFR1). The first choice of the OWASP standard is
+# Argon2id, which needs a library this project is not allowed to add, so what
+# is used is the fallback the same standard names: PBKDF2 with HMAC-SHA256.
+#
+# Only that one is listed. Django's default list also carries SHA1, bcrypt,
+# scrypt and Argon2 so that old hashes can still be read; BidHaus has never
+# written one of those, so keeping them alive would leave weaker verifiers
+# standing for passwords that do not exist.
+#
+# The iteration count is Django's own, which already sits well above the floor
+# the standard asks for. Writing a number here would freeze it, and Django
+# raises its default with every release; a test guards the floor instead.
+PASSWORD_HASHERS = ["django.contrib.auth.hashers.PBKDF2PasswordHasher"]
 
 LANGUAGE_CODE = "es-co"
 TIME_ZONE = os.environ.get("BIDHAUS_TIME_ZONE", "America/Bogota")
