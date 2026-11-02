@@ -2,7 +2,7 @@
 
 from django import forms
 
-from escrow.models import MAX_EVIDENCE_FILES, Dispute
+from escrow.models import MAX_EVIDENCE_FILES, Dispute, EscrowTransaction
 from escrow.validators import (
     EVIDENCE_EXTENSIONS,
     MAX_EVIDENCE_SIZE_MB,
@@ -70,4 +70,27 @@ class EvidenceUploadForm(forms.Form):
             "Solo los ve el vendedor y un administrador."
         ),
         error_messages={"required": "Elige al menos un archivo para adjuntarlo."},
+    )
+
+
+class DisputeResolutionForm(forms.Form):
+    """The decision an administrator takes over a dispute (FR19).
+
+    The outcome is named by the state the money lands in, so the form and the
+    service speak about it with the same words.
+    """
+
+    outcome = forms.ChoiceField(
+        label="¿A favor de quién se resuelve?",
+        choices=[
+            (EscrowTransaction.State.RELEASED, "Del vendedor: liberar el pago"),
+            (EscrowTransaction.State.REFUNDED, "Del comprador: reembolsar el pago"),
+        ],
+        widget=forms.RadioSelect,
+        error_messages={"required": "Elige a favor de quién se resuelve."},
+    )
+    resolution = forms.CharField(
+        label="Razón de la decisión",
+        help_text="La leen el comprador y el vendedor. Explica en qué te basaste.",
+        widget=forms.Textarea(attrs={"rows": 5}),
     )

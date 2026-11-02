@@ -47,3 +47,11 @@ class TooManyEvidenceFiles(EscrowError):
     def __init__(self, remaining_slots):
         self.remaining_slots = remaining_slots
         super().__init__(f"Only {remaining_slots} evidence files still fit in this dispute.")
+
+
+class NotAnAdministrator(EscrowError):
+    """Only an administrator arbitrates between a buyer and a seller (FR19)."""
+
+
+class UnknownOutcome(EscrowError):
+    """A dispute ends with the money released or refunded, and nothing else."""

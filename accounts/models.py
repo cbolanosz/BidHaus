@@ -43,6 +43,11 @@ class User(AbstractUser):
     def __str__(self):
         return self.full_name or self.email
 
+    @property
+    def is_administrator(self):
+        """Whether this account arbitrates: it decides what the two sides cannot."""
+        return self.role == self.Role.ADMINISTRATOR
+
 
 def identity_document_storage():
     """Store identity documents outside MEDIA_ROOT, where no URL reaches them.

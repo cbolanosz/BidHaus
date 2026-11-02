@@ -22,6 +22,12 @@ urlpatterns = [
         views.transaction_open_dispute,
         name="transaction_open_dispute",
     ),
+    path("disputes/", views.dispute_queue, name="dispute_queue"),
+    path(
+        "disputes/<int:dispute_id>/resolve/",
+        views.dispute_resolve,
+        name="dispute_resolve",
+    ),
     path(
         "disputes/<int:dispute_id>/evidence/",
         views.dispute_evidence,

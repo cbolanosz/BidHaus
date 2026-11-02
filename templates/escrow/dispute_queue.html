@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Disputas por resolver — BidHaus{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <p class="eyebrow">Administración</p>
+    <h1>Disputas por resolver</h1>
+    <p class="hero-lede">
+        {% if disputes %}
+            Hay {{ disputes|length }} reclamo{{ disputes|length|pluralize }} esperando una decisión,
+            del más antiguo al más reciente. El dinero de cada uno sigue retenido.
+        {% else %}
+            No hay ningún reclamo esperando una decisión.
+        {% endif %}
+    </p>
+</section>
+
+{% if disputes %}
+    <ul class="lots">
+        {% for dispute in disputes %}
+            <li>
+                <a class="lot" href="{% url 'escrow:dispute_resolve' dispute.pk %}">
+                    <div class="lot-body">
+                        <p class="eyebrow">Lote {{ dispute.transaction.auction.pk|stringformat:"03d" }}</p>
+                        <h2 class="lot-title">{{ dispute.transaction.auction.title }}</h2>
+                        <p class="lot-price money">
+                            $ {{ dispute.transaction.amount|floatformat:0|intcomma }}<small>COP</small>
+                        </p>
+                        <p class="lot-meta">
+                            {{ dispute.opened_by.full_name }} · {{ dispute.opened_at|date:"d/m/Y H:i" }}
+                        </p>
+                    </div>
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <div class="empty">
+        <p class="empty-title">Nada pendiente</p>
+        <p>Cuando un comprador abra un reclamo aparecerá aquí.</p>
+    </div>
+{% endif %}
+{% endblock %}

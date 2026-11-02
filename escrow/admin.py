@@ -1,6 +1,8 @@
 """Where an administrator reads the money a closed auction holds (FR14)."""
 
 from django.contrib import admin
+from django.urls import reverse
+from django.utils.html import format_html
 
 from escrow.models import Dispute, EscrowTransaction, Evidence, StateChange
 
@@ -41,8 +43,22 @@ class EvidenceInline(admin.TabularInline):
     model = Evidence
     extra = 0
     can_delete = False
-    fields = ["file", "attached_at"]
+    fields = ["link", "attached_at"]
     readonly_fields = fields
+
+    @admin.display(description="archivo")
+    def link(self, evidence):
+        """Point at the view that checks who is asking, not at the file (DBR07).
+
+        Evidence lives outside MEDIA_ROOT, so it has no address of its own.
+        """
+        if not evidence.pk:
+            return "—"
+        return format_html(
+            '<a href="{}" target="_blank">{}</a>',
+            reverse("escrow:evidence_file", args=[evidence.pk]),
+            evidence.filename,
+        )
 
     def has_add_permission(self, request, obj=None):
         return False

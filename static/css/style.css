@@ -440,6 +440,40 @@ img {
     background: var(--surface);
 }
 
+/* Headings and paragraphs carry no margin anywhere in this sheet, so a panel
+ * sets the rhythm of whatever it is given: one block after another. */
+.panel > * + * {
+    margin-top: 1rem;
+}
+
+.panel > h2 + .help,
+.panel > h3 + .help {
+    margin-top: 0.4rem;
+}
+
+.panel h3 {
+    margin-top: 1.75rem;
+    font-size: 1.05rem;
+}
+
+.panel .help {
+    max-width: 58ch;
+    line-height: 1.55;
+}
+
+/* Two panels in a row are two separate things, and have to look like it. */
+.panel + .panel,
+.panel + .prose,
+.prose + .panel,
+.lot-head + .panel {
+    margin-top: 1.75rem;
+}
+
+/* A form inside a panel already spaces its own fields. */
+.panel > .form {
+    margin-top: 1.5rem;
+}
+
 /* ---------- Forms ---------- */
 
 .form {
@@ -480,6 +514,69 @@ textarea:focus {
 
 textarea {
     resize: vertical;
+}
+
+/* The rule above dresses text boxes. A radio stretched to the full width, with
+ * padding and a border, turns into a grey bar nobody reads as a choice: the
+ * control ends up centred and its text falls to the line below. */
+input[type="radio"],
+input[type="checkbox"] {
+    width: auto;
+    flex: none;
+    margin-right: 0.6rem;
+    padding: 0;
+    border: none;
+    background: none;
+    accent-color: var(--cobalt);
+}
+
+/* A label wrapped around a radio names an option, not a field, so it reads as
+ * a row the whole width of which is clickable. Browsers without :has() still
+ * get a usable control from the reset above; this only makes it comfortable. */
+label:has(input[type="radio"]),
+label:has(input[type="checkbox"]) {
+    display: flex;
+    align-items: center;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+label:has(input[type="radio"]:hover),
+label:has(input[type="checkbox"]:hover) {
+    border-color: var(--cobalt);
+}
+
+label:has(input[type="radio"]:checked),
+label:has(input[type="checkbox"]:checked) {
+    border-color: var(--cobalt);
+    background: rgba(27, 59, 212, 0.05);
+}
+
+/* Django wraps each option in a div of its own; they stack as a list. */
+.field > div:has(input[type="radio"]),
+.field > div:has(input[type="checkbox"]) {
+    display: grid;
+    gap: 0.5rem;
+}
+
+/* A group of choices carries a legend instead of a label. */
+fieldset.field {
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+fieldset.field legend {
+    margin-bottom: 0.55rem;
+    padding: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
 }
 
 input[type="number"] {
@@ -908,6 +1005,13 @@ input[type="file"]::file-selector-button {
     padding-top: 1.35rem;
     border-top: 1px solid var(--line);
     font-size: 0.92rem;
+}
+
+/* The rule on top separates the facts from whatever is above them. Opening a
+ * panel with it leaves a line hanging under nothing. */
+.panel > .facts:first-child {
+    padding-top: 0;
+    border-top: none;
 }
 
 .facts dt {

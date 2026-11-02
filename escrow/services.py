@@ -9,11 +9,13 @@ from escrow.exceptions import (
     AuctionIsNotClosed,
     DisputeIsResolved,
     NoEvidence,
+    NotAnAdministrator,
     NotAParticipant,
     NotTheBuyer,
     TooManyEvidenceFiles,
     TransactionAlreadyExists,
     TransactionIsNotHeld,
+    UnknownOutcome,
 )
 from escrow.models import (
     MAX_EVIDENCE_FILES,
@@ -85,6 +87,8 @@ def confirm_reception(escrow_transaction, buyer):
     """
     if escrow_transaction.buyer_id != buyer.id:
         raise NotTheBuyer
+    if not escrow_transaction.is_held:
+        raise TransactionIsNotHeld
     return release_funds(escrow_transaction, actor=buyer)
 
 
@@ -96,8 +100,12 @@ def release_funds(escrow_transaction, actor):
     the money changes hands. It is stored rather than recalculated on reading:
     if the platform raises its percentage next year, a sale already settled
     must keep the figure it was actually charged.
+
+    It serves two paths: the buyer confirming that the item arrived (FR15) and
+    an administrator ending a dispute in favour of the seller (FR19). What it
+    refuses is a sale that already moved its money one way or the other.
     """
-    if not escrow_transaction.is_held:
+    if escrow_transaction.is_settled:
         raise TransactionIsNotHeld
 
     previous_state = escrow_transaction.state
@@ -186,6 +194,64 @@ def find_dispute_by_id(dispute_id):
 def find_evidence(evidence_id):
     """Return that piece of evidence, or raise Evidence.DoesNotExist."""
     return Evidence.objects.select_related("dispute__transaction").get(pk=evidence_id)
+
+
+@transaction.atomic
+def refund_buyer(escrow_transaction, actor):
+    """Give the retained money back to the buyer (FR19).
+
+    BidHaus charges no commission on a sale that did not happen, so the stored
+    commission stays at zero and the buyer gets the whole amount back.
+    """
+    if escrow_transaction.is_settled:
+        raise TransactionIsNotHeld
+
+    previous_state = escrow_transaction.state
+    escrow_transaction.state = EscrowTransaction.State.REFUNDED
+    escrow_transaction.save(update_fields=["state"])
+    record_state_change(escrow_transaction, previous_state=previous_state, actor=actor)
+    return escrow_transaction
+
+
+# The two ways a dispute can end, named by the state the money lands in.
+DISPUTE_OUTCOMES = {
+    EscrowTransaction.State.RELEASED: release_funds,
+    EscrowTransaction.State.REFUNDED: refund_buyer,
+}
+
+
+@transaction.atomic
+def resolve_dispute(dispute, administrator, outcome, resolution):
+    """Settle a dispute in favour of one side, with the reason (FR19).
+
+    Only an administrator: the two sides of the sale already said their piece,
+    and the whole point of retaining the money is that somebody outside the
+    trade decides. Resolving is what finally moves it, so the transition is
+    written to the history with the administrator as its actor.
+    """
+    if administrator.role != User.Role.ADMINISTRATOR:
+        raise NotAnAdministrator
+    if not dispute.is_open:
+        raise DisputeIsResolved
+    if outcome not in DISPUTE_OUTCOMES:
+        raise UnknownOutcome
+
+    settle = DISPUTE_OUTCOMES[outcome]
+    settle(dispute.transaction, actor=administrator)
+
+    dispute.state = Dispute.State.RESOLVED
+    dispute.resolution = resolution
+    dispute.save(update_fields=["state", "resolution"])
+    return dispute
+
+
+def list_open_disputes():
+    """Return every claim waiting for an administrator, oldest first (FR19)."""
+    return (
+        Dispute.objects.filter(state=Dispute.State.OPEN)
+        .select_related("transaction__auction", "transaction__buyer", "opened_by")
+        .order_by("opened_at")
+    )
 
 
 def find_transaction(transaction_id):

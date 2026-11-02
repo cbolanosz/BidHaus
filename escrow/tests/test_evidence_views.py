@@ -219,3 +219,36 @@ class TheHeaderLeadsBackToTheDisputeTests(TestCase):
         response = self.client.get(self.catalogue)
 
         self.assertNotContains(response, "en disputa")
+
+
+@override_settings(DISPUTE_EVIDENCE_ROOT=tempfile.mkdtemp())
+class EvidenceHasNoPublicAddressTests(TestCase):
+    """A link straight to the file would reach nothing, and would skip the check."""
+
+    def setUp(self):
+        self.buyer = create_bidder("Laura Gómez")
+        self.auction = create_closed_auction(bidder=self.buyer)
+        self.dispute = open_dispute(
+            hold_payment(self.auction), self.buyer, COMPLAINT
+        )
+        self.evidence = attach_evidence(self.dispute, self.buyer, [build_evidence()])[0]
+
+    def test_the_file_refuses_to_hand_out_a_url(self):
+        with self.assertRaises(NotImplementedError):
+            self.evidence.file.url
+
+    def test_the_admin_links_through_the_view_that_checks_who_is_asking(self):
+        administrator = create_administrator()
+        administrator.is_staff = True
+        administrator.is_superuser = True
+        administrator.save(update_fields=["is_staff", "is_superuser"])
+        self.client.force_login(administrator)
+
+        response = self.client.get(
+            reverse("admin:escrow_dispute_change", args=[self.dispute.pk])
+        )
+
+        self.assertContains(
+            response, reverse("escrow:evidence_file", args=[self.evidence.pk])
+        )
+        self.assertNotContains(response, "/media/disputes/")

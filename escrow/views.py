@@ -11,12 +11,13 @@ from django.views.decorators.http import require_POST
 from escrow.exceptions import (
     DisputeIsResolved,
     NoEvidence,
+    NotAnAdministrator,
     NotAParticipant,
     NotTheBuyer,
     TooManyEvidenceFiles,
     TransactionIsNotHeld,
 )
-from escrow.forms import DisputeForm, EvidenceUploadForm
+from escrow.forms import DisputeForm, DisputeResolutionForm, EvidenceUploadForm
 from escrow.models import MAX_EVIDENCE_FILES, Dispute, EscrowTransaction, Evidence
 from escrow.services import (
     assert_may_read,
@@ -27,8 +28,10 @@ from escrow.services import (
     find_evidence,
     find_transaction,
     list_evidence,
+    list_open_disputes,
     list_state_changes,
     open_dispute,
+    resolve_dispute,
 )
 
 User = get_user_model()
@@ -51,6 +54,7 @@ def transaction_detail(request, transaction_id):
             "shows_breakdown": _shows_breakdown(escrow_transaction, request.user),
             "dispute": dispute,
             "evidence": list_evidence(dispute) if dispute else [],
+            "may_resolve": _may_resolve(dispute, request.user),
         },
     )
 
@@ -163,6 +167,66 @@ def evidence_file(request, evidence_id):
     return FileResponse(evidence.file.open("rb"), filename=evidence.filename)
 
 
+@login_required
+def dispute_queue(request):
+    """List the claims waiting for an administrator to decide (FR19)."""
+    _assert_is_an_administrator(request.user)
+
+    return render(
+        request,
+        "escrow/dispute_queue.html",
+        {"disputes": list_open_disputes()},
+    )
+
+
+@login_required
+def dispute_resolve(request, dispute_id):
+    """Show a claim with its evidence and register the decision taken (FR19)."""
+    _assert_is_an_administrator(request.user)
+    dispute = _find_dispute_or_404(dispute_id)
+
+    if request.method != "POST":
+        return _render_resolution_page(request, dispute, DisputeResolutionForm())
+
+    form = DisputeResolutionForm(request.POST)
+    if not form.is_valid():
+        return _render_resolution_page(request, dispute, form)
+
+    try:
+        resolve_dispute(
+            dispute,
+            request.user,
+            outcome=form.cleaned_data["outcome"],
+            resolution=form.cleaned_data["resolution"],
+        )
+    except DisputeIsResolved:
+        form.add_error(None, "Esta disputa ya estaba resuelta.")
+        return _render_resolution_page(request, dispute, form)
+
+    messages.success(request, "Resolviste la disputa y el dinero se movió.")
+    return redirect(
+        "escrow:transaction_detail", transaction_id=dispute.transaction_id
+    )
+
+
+def _assert_is_an_administrator(user):
+    if user.role != User.Role.ADMINISTRATOR:
+        raise PermissionDenied("Solo un administrador resuelve una disputa.")
+
+
+def _render_resolution_page(request, dispute, form):
+    return render(
+        request,
+        "escrow/dispute_resolve.html",
+        {
+            "dispute": dispute,
+            "transaction": dispute.transaction,
+            "evidence": list_evidence(dispute),
+            "form": form,
+        },
+    )
+
+
 def _render_evidence_page(request, dispute, form):
     """Render the evidence page with the state the buyer needs to see."""
     return render(
@@ -205,6 +269,11 @@ def _assert_may_read_or_403(escrow_transaction, user):
         assert_may_read(escrow_transaction, user)
     except NotAParticipant:
         raise PermissionDenied("Esta transacción es de su comprador y su vendedor.")
+
+
+def _may_resolve(dispute, user):
+    """Whether this user is the one who can still decide the claim (FR19)."""
+    return dispute is not None and dispute.is_open and user.role == User.Role.ADMINISTRATOR
 
 
 def _may_confirm(escrow_transaction, user):

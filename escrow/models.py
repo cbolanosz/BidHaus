@@ -69,6 +69,11 @@ class EscrowTransaction(models.Model):
         return self.state == self.State.HELD
 
     @property
+    def is_refunded(self):
+        """Whether the money went back to the buyer instead of to the seller."""
+        return self.state == self.State.REFUNDED
+
+    @property
     def is_settled(self):
         """Whether the money already moved for good, one way or the other."""
         return self.state in (self.State.RELEASED, self.State.REFUNDED)
@@ -180,6 +185,7 @@ class Dispute(models.Model):
     state = models.CharField(
         "estado", max_length=20, choices=State.choices, default=State.OPEN
     )
+    resolution = models.TextField("resolución", blank=True)
     opened_at = models.DateTimeField("fecha de apertura", auto_now_add=True)
 
     class Meta:
@@ -196,13 +202,27 @@ class Dispute(models.Model):
         return self.state == self.State.OPEN
 
 
+class PrivateFileSystemStorage(FileSystemStorage):
+    """A storage whose files have no public address, and says so out loud.
+
+    Asked for a URL it has none, Django falls back to MEDIA_URL and hands out a
+    link that looks right and leads nowhere. Refusing is better: the mistake
+    then surfaces while the page is being written, not when somebody clicks.
+    """
+
+    def url(self, name):
+        raise NotImplementedError(
+            "Evidence is served by escrow.views.evidence_file, never by URL."
+        )
+
+
 def evidence_storage():
     """Store evidence outside MEDIA_ROOT, where no URL reaches it.
 
     A callable, not an instance, so the migration records this function by name
     instead of freezing one machine's absolute path into the repository.
     """
-    return FileSystemStorage(location=settings.DISPUTE_EVIDENCE_ROOT)
+    return PrivateFileSystemStorage(location=settings.DISPUTE_EVIDENCE_ROOT)
 
 
 def evidence_path(evidence, filename):

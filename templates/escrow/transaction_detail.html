@@ -19,7 +19,10 @@
         <dd><span class="state state-{{ transaction.state }}">{{ transaction.get_state_display }}</span></dd>
         <dt>Monto de la venta</dt>
         <dd class="money">$ {{ transaction.amount|floatformat:0|intcomma }} COP</dd>
-        {% if shows_breakdown %}
+        {% if transaction.is_refunded %}
+            <dt>Reembolsado al comprador</dt>
+            <dd class="money payout">$ {{ transaction.amount|floatformat:0|intcomma }} COP</dd>
+        {% elif shows_breakdown %}
             <dt>Comisión de BidHaus</dt>
             <dd class="money">− $ {{ transaction.commission_due|floatformat:0|intcomma }} COP</dd>
             <dt>{% if transaction.is_settled %}Recibió{% else %}Recibirá{% endif %} el vendedor</dt>
@@ -84,6 +87,15 @@
             <p class="help">
                 <a href="{% url 'escrow:dispute_evidence' dispute.pk %}">Adjuntar pruebas</a>
                 que respalden tu reclamo.
+            </p>
+        {% endif %}
+
+        {% if dispute.resolution %}
+            <h3>Decisión de BidHaus</h3>
+            <blockquote class="quote">{{ dispute.resolution|linebreaksbr }}</blockquote>
+        {% elif may_resolve %}
+            <p class="help">
+                <a href="{% url 'escrow:dispute_resolve' dispute.pk %}">Resolver esta disputa</a>
             </p>
         {% endif %}
     </div>
