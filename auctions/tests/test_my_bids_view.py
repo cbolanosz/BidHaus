@@ -6,7 +6,8 @@ from time import perf_counter
 from django.test import TestCase
 from django.urls import reverse
 
-from auctions.models import Bid
+from auctions.models import Auction, Bid
+from auctions.services import place_bid
 from auctions.tests.factories import create_auction, create_bid, create_bidder
 
 
@@ -95,3 +96,66 @@ class MyBidsViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertLess(elapsed, 3)
+
+
+class WhatEachBidSaysAboutItselfTests(TestCase):
+    """A list of amounts says nothing; a bidder wants to know how each one went.
+
+    These go through place_bid and not through the factory, because what a bid
+    is worth is read from the current price of its auction, and only the
+    service keeps that price up to date (FR06).
+    """
+
+    def setUp(self):
+        self.bidder = create_bidder("Laura Gómez")
+        self.url = reverse("auctions:my_bids")
+        self.client.force_login(self.bidder)
+
+    def close(self, auction):
+        """Close an auction on its highest bid, the way the closing does."""
+        auction.state = Auction.State.CLOSED
+        auction.winning_bid = auction.bids.order_by("-amount").first()
+        auction.save(update_fields=["state", "winning_bid"])
+        return auction
+
+    def test_a_bid_that_still_leads_an_open_auction(self):
+        place_bid(create_auction().pk, self.bidder, Decimal("500000"))
+
+        self.assertContains(self.client.get(self.url), "Vas liderando")
+
+    def test_a_bid_somebody_else_has_passed(self):
+        auction = create_auction()
+        place_bid(auction.pk, self.bidder, Decimal("500000"))
+        place_bid(auction.pk, create_bidder("Otra"), Decimal("600000"))
+
+        response = self.client.get(self.url)
+
+        self.assertContains(response, "Te superaron")
+        self.assertNotContains(response, "Vas liderando")
+
+    def test_a_bid_that_won_its_auction(self):
+        auction = create_auction()
+        place_bid(auction.pk, self.bidder, Decimal("500000"))
+        self.close(auction)
+
+        self.assertContains(self.client.get(self.url), "Ganaste")
+
+    def test_a_bid_that_lost_the_auction_it_was_in(self):
+        auction = create_auction()
+        place_bid(auction.pk, self.bidder, Decimal("500000"))
+        place_bid(auction.pk, create_bidder("Otra"), Decimal("600000"))
+        self.close(auction)
+
+        response = self.client.get(self.url)
+
+        self.assertContains(response, "No ganaste")
+        self.assertNotContains(response, ">Ganaste<")
+
+    def test_the_standing_costs_no_query_per_row(self):
+        """Five bids must not mean five extra questions to the database."""
+        for _ in range(5):
+            place_bid(create_auction().pk, self.bidder, Decimal("500000"))
+
+        # session, user, the three header cells, count and page of bids.
+        with self.assertNumQueries(7):
+            self.client.get(self.url)

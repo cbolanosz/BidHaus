@@ -27,6 +27,19 @@
                     </a>
                 </p>
                 <p class="when">{{ bid.timestamp|date:"d/m/Y H:i" }}</p>
+                <p class="outcome">
+                    {% if bid.auction.is_open %}
+                        {% if bid.is_the_highest_bid %}
+                            <span class="state">Vas liderando</span>
+                        {% else %}
+                            <span class="state state-closed">Te superaron</span>
+                        {% endif %}
+                    {% elif bid.is_the_winning_bid %}
+                        <span class="state state-released">Ganaste</span>
+                    {% else %}
+                        <span class="state state-closed">No ganaste</span>
+                    {% endif %}
+                </p>
             </li>
         {% endfor %}
     </ol>

@@ -3,8 +3,8 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
-from django.shortcuts import redirect, render
 from django.core.paginator import Paginator
+from django.shortcuts import redirect, render
 
 from auctions.exceptions import (
     AuctionClosed,
@@ -53,6 +53,10 @@ def auction_catalogue(request):
     return render(request, "auctions/catalogue.html", {"form": form, "auctions": auctions})
 
 
+# How many bids one page of the own-bids list holds (FR13).
+BIDS_PER_PAGE = 20
+
+
 @login_required
 def my_auctions(request):
     """List every auction the user in session has published (FR12)."""
@@ -63,8 +67,12 @@ def my_auctions(request):
 @login_required
 def my_bids(request):
     """List every bid placed by the authenticated user (FR13)."""
-    bids = Paginator(list_bids_by_bidder(request.user), 20).get_page(request.GET.get("page"))
-    return render(request, "auctions/my_bids.html", {"bids": bids})
+    pages = Paginator(list_bids_by_bidder(request.user), BIDS_PER_PAGE)
+    return render(
+        request,
+        "auctions/my_bids.html",
+        {"bids": pages.get_page(request.GET.get("page"))},
+    )
 
 
 @login_required

@@ -264,10 +264,22 @@ class BidQuerySet(models.QuerySet):
     """Closes the two ways of changing rows in bulk, which skip Model.save()."""
 
     def for_bidder_list(self, bidder):
-        """Load a user's bids and the auction each one belongs to (FR13)."""
-        return self.filter(bidder=bidder).select_related(
-            "auction", "auction__category"
-        ).order_by("-timestamp", "-pk")
+        """Load a user's bids, their auctions, and how each bid stands (FR13).
+
+        How it stands is annotated rather than asked row by row. A bid is the
+        highest one when its amount is the current price of its auction,
+        because a bid has to beat that price to be registered at all; and it
+        is the winning one when the auction closed on it.
+        """
+        return (
+            self.filter(bidder=bidder)
+            .select_related("auction", "auction__category")
+            .annotate(
+                is_the_highest_bid=models.Q(amount=models.F("auction__current_price")),
+                is_the_winning_bid=models.Q(pk=models.F("auction__winning_bid")),
+            )
+            .order_by("-timestamp", "-pk")
+        )
 
     def update(self, **fields):
         raise BidIsImmutable
