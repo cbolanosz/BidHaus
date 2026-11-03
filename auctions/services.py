@@ -1,5 +1,6 @@
 """Use cases of the auctions app. Views call these; they never touch the ORM."""
 
+import threading
 import time
 from dataclasses import dataclass
 
@@ -32,6 +33,7 @@ FIRST_DISPLAY_ORDER = 1
 # while another one is being written fails instead of waiting (CLAUDE.md 4.1).
 BID_ATTEMPTS = 3
 BID_RETRY_BACKOFF_SECONDS = 0.1
+BID_WRITE_LOCK = threading.Lock()
 
 
 @transaction.atomic
@@ -241,6 +243,11 @@ def list_bids(auction):
     return auction.bids.select_related("bidder")
 
 
+def list_bids_by_bidder(bidder):
+    """Return one user's bids, newest first, with their auctions loaded (FR13)."""
+    return Bid.objects.for_bidder_list(bidder)
+
+
 def place_bid(auction_id, bidder, amount):
     """Register a bid on an open auction and update its current price (FR05).
 
@@ -249,11 +256,12 @@ def place_bid(auction_id, bidder, amount):
     whole transaction is what turns that rejection into a bid that is simply
     registered a moment later.
     """
-    for attempt in range(BID_ATTEMPTS):
-        try:
-            return _register_bid(auction_id, bidder, amount)
-        except OperationalError:
-            time.sleep(BID_RETRY_BACKOFF_SECONDS * (attempt + 1))
+    with BID_WRITE_LOCK:
+        for attempt in range(BID_ATTEMPTS):
+            try:
+                return _register_bid(auction_id, bidder, amount)
+            except OperationalError:
+                time.sleep(BID_RETRY_BACKOFF_SECONDS * (attempt + 1))
     raise BiddingIsBusy
 
 

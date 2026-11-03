@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import redirect, render
+from django.core.paginator import Paginator
 
 from auctions.exceptions import (
     AuctionClosed,
@@ -27,6 +28,7 @@ from auctions.services import (
     find_public_auction,
     list_auctions_by_seller,
     list_bids,
+    list_bids_by_bidder,
     list_photographs,
     place_bid,
     publish_auction,
@@ -56,6 +58,13 @@ def my_auctions(request):
     """List every auction the user in session has published (FR12)."""
     auctions = list_auctions_by_seller(request.user)
     return render(request, "auctions/my_auctions.html", {"auctions": auctions})
+
+
+@login_required
+def my_bids(request):
+    """List every bid placed by the authenticated user (FR13)."""
+    bids = Paginator(list_bids_by_bidder(request.user), 20).get_page(request.GET.get("page"))
+    return render(request, "auctions/my_bids.html", {"bids": bids})
 
 
 @login_required

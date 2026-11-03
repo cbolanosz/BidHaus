@@ -3,6 +3,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from decimal import Decimal
+from time import perf_counter
 
 from django.db import connections
 from django.test import TestCase, TransactionTestCase
@@ -134,8 +135,10 @@ class ConcurrentBidTests(TransactionTestCase):
             finally:
                 connections.close_all()
 
+        started = perf_counter()
         with ThreadPoolExecutor(max_workers=CONCURRENT_BIDDERS) as pool:
             list(pool.map(bid, range(CONCURRENT_BIDDERS)))
+        return perf_counter() - started
 
     def test_every_registered_bid_beat_the_price_it_found(self):
         self.bid_from_every_bidder_at_once()
@@ -151,3 +154,8 @@ class ConcurrentBidTests(TransactionTestCase):
         self.auction.refresh_from_db()
         highest_bid = self.auction.bids.order_by("-amount").first()
         self.assertEqual(self.auction.current_price, highest_bid.amount)
+
+    def test_registers_twenty_concurrent_bids_within_two_seconds(self):
+        elapsed = self.bid_from_every_bidder_at_once()
+
+        self.assertLess(elapsed, 2)

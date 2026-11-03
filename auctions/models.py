@@ -263,6 +263,12 @@ class Photograph(models.Model):
 class BidQuerySet(models.QuerySet):
     """Closes the two ways of changing rows in bulk, which skip Model.save()."""
 
+    def for_bidder_list(self, bidder):
+        """Load a user's bids and the auction each one belongs to (FR13)."""
+        return self.filter(bidder=bidder).select_related(
+            "auction", "auction__category"
+        ).order_by("-timestamp", "-pk")
+
     def update(self, **fields):
         raise BidIsImmutable
 
@@ -301,6 +307,9 @@ class Bid(models.Model):
 
     class Meta:
         ordering = ["-amount", "timestamp"]
+        indexes = [
+            models.Index(fields=["bidder", "-timestamp"], name="bid_bidder_time_idx"),
+        ]
         verbose_name = "puja"
         verbose_name_plural = "pujas"
 
